@@ -17,7 +17,7 @@ class ApprovalEngMasterData(models.Model):
         db_table="ApprovalEngMasterData"
 
 class EmpLeave(models.Model):
-    empId = models.CharField(max_length=255)
+    empId = models.IntegerField(null=False)
     leaveRequestId = models.AutoField(primary_key=True)
     pendingActionFrom = models.CharField(max_length=255)
     requestRaisedDatetime =models.DateTimeField(auto_now=True)
@@ -34,7 +34,7 @@ class ApprovalFlow(models.Model):
     
 
 class ApprovalFlowHirarchies(models.Model):
-    empId = models.CharField(max_length=255)
+    empId = models.IntegerField(null=False)
     hirarchy=models.IntegerField()
     approvalFlowId=models.ForeignKey(ApprovalFlow,null=False,on_delete=models.CASCADE)
     class Meta:

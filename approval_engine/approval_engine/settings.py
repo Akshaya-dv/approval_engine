@@ -80,9 +80,9 @@ DATABASES = {
        'ENGINE': 'django.db.backends.postgresql',  
         'NAME': 'Approval Engine',  
         'USER':'postgres',  
-        'PASSWORD':'1234',  
-        'HOST':'localhost',  
-        'PORT':'5433'  
+        'PASSWORD':'Admin@123',  
+        'HOST':'172.16.0.198',  
+        'PORT':'5432'  
     }
 }
 
