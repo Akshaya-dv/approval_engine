@@ -84,11 +84,15 @@ class empLeave(APIView):
             approval_id = emp_leave_entry.get('approvalEngUniqueID')
             approval_data = approval_data_dict.get(approval_id)
             # print(type(emp_leave_entry))
-            combined_entry = { 
-                'emp_leave_data': emp_leave_entry,
-                'approval_data': approval_data,
-            }
-            combined_data.append(combined_entry)
+            emp_leave_entry['status']=approval_data['status']
+            emp_leave_entry['approvalReason']=approval_data['approvalReason']
+            emp_leave_entry['rejectionReason']=approval_data['rejectionReason']
+            emp_leave_entry['description']=approval_data['description']
+            emp_leave_entry['justification']=approval_data['justification']
+            emp_leave_entry['remarks']=approval_data['remarks']
+            emp_leave_entry['comments']=approval_data['comments']
+        
+            combined_data.append(emp_leave_entry)
 
         return Response(combined_data)
 

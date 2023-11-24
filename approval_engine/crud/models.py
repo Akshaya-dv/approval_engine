@@ -12,7 +12,7 @@ class ApprovalEngMasterData(models.Model):
     remarks =JSONField()
     comments =JSONField()
     latestUpdateDate =models.DateTimeField(max_length=255) 
-    flowName=models.CharField(null=False,blank=False,default='unassigned')
+    flowName=models.CharField(max_length=255,null=False,blank=False,default='unassigned')
     class Meta:
         db_table="ApprovalEngMasterData"
 
@@ -28,7 +28,7 @@ class EmpLeave(models.Model):
 
 class ApprovalFlow(models.Model):
     approvalFlowId= models.IntegerField(primary_key=True,null=False)
-    approvalFlowName= models.CharField(255)
+    approvalFlowName= models.CharField(max_length=255)
     class Meta:
         db_table="ApprovalFlow"
     
