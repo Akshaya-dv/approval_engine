@@ -1,11 +1,9 @@
 from django.urls import path
-from .views import empLeave,LeaveApprovalStatus
+from .views import empLeave
 
 urlpatterns = [
    
     path('empleaves',empLeave.as_view(), name='EmployeeLeaves'),
-    path('leaveapproval',LeaveApprovalStatus.as_view(), name='LeaveApprovalStatus'),
-    
 
       
 ]
