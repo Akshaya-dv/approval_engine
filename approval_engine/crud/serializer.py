@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import EmpLeave,ApprovalEngMasterData,ApprovalFlow,ApprovalFlowHirarchies
+from .models import ApprovalEngMasterData,ApprovalFlow,ApprovalFlowHirarchies
+from .leaveModel_to_be_deleted import EmpLeave
+from .e_sepModel_to_be_deleted import EmpSep
 
 class EmpLeaveSerializer(serializers.ModelSerializer):
   class Meta:
@@ -10,7 +12,7 @@ class EmpLeaveSerializer(serializers.ModelSerializer):
 class ApprovalEngMasterDataSerializer(serializers.ModelSerializer):
   class Meta:
     model=ApprovalEngMasterData
-    fields=['approvalEngUniqueID','status','approvalReason','rejectionReason','description','justification','remarks','comments','latestUpdateDate','flowName']
+    fields=['approvalEngUniqueID','status','approvalReason','rejectionReason','description','justification','remarks','comments','latestUpdateDate','flow_id']
 
 class ApprovalFlowSerializer(serializers.ModelSerializer):
     class Meta:
