@@ -12,6 +12,7 @@ from .serializer import EmpLeaveSerializer,ApprovalEngMasterDataSerializer,Appro
 from rest_framework import status
 import psycopg2
 from psycopg2.extras import Json
+from django.db import connection
 
 
 
@@ -129,6 +130,179 @@ def insert_empLeave(EmpId,PendingActionFrom,RequestRaisedDatetime,ActionDatetime
 def insert_ApprovalEngMasterData():
     pass
 
+class LeaveApprovalStatus(APIView):
+    
+    # #not need to change 
+    def get(self,request):
+        try:
+            request = request if isinstance(request,dict) else json.loads(request.body)
+            pending={'approvalEngUniqueID_id':[],'empId':[]}
+            if 'empId' in request and request['empId']:
+                approvaldata = list(ApprovalEngMasterData.objects.all().values())
+            if 'empId' in request and request['empId'] and 'status' in request and request['status']:
+                if approvaldata:
+                    for data in approvaldata:
+                        for status in data['status']:
+                            if request['empId'] == status['ActionBy'] and request['status']== status['status']:
+                                pending['approvalEngUniqueID_id'].append(data['approvalEngUniqueID'])
+            else:
+                if approvaldata:
+                    for data in approvaldata:
+                        for status in data['status']:
+                            if request['empId'] == status['ActionBy']:
+                                pending['approvalEngUniqueID_id'].append(data['approvalEngUniqueID'])
+            employee_leave = list(EmpLeave.objects.filter(approvalEngUniqueID__in=pending['approvalEngUniqueID_id']).values())
+            approvaldata = list(ApprovalEngMasterData.objects.filter(approvalEngUniqueID__in=pending['approvalEngUniqueID_id']).values())
+            approval_data_dict = {}
+            for approve in approvaldata:
+                approval_data_dict[approve['approvalEngUniqueID']]=approve
+            for leave in employee_leave:
+                print("leave['approvalEngUniqueID']",leave['approvalEngUniqueID_id'])
+                leave['status']=approval_data_dict[leave['approvalEngUniqueID_id']]['status']
+                leave['approvalReason']=approval_data_dict[leave['approvalEngUniqueID_id']]['approvalReason']
+                leave['rejectionReason']=approval_data_dict[leave['approvalEngUniqueID_id']]['rejectionReason']
+                leave['description']=approval_data_dict[leave['approvalEngUniqueID_id']]['description']
+                leave['justification']=approval_data_dict[leave['approvalEngUniqueID_id']]['justification']
+                leave['remarks']=approval_data_dict[leave['approvalEngUniqueID_id']]['remarks']
+                leave['comments']=approval_data_dict[leave['approvalEngUniqueID_id']]['comments']
+            else:
+                print("----->empId")
+        except (Exception) as error:
+            print('error------>',error)
+            d=[2]
+        return Response(employee_leave)
+    
+    # #not need to change without sp
+    def put(self,request):
+        try:
+            return_object={}
+            request = request if isinstance(request,dict) else json.loads(request.body)
+            approvaldata = ApprovalEngMasterData.objects.get(approvalEngUniqueID=request['approvalEngUniqueID_id'])
+            if 'status' in request and request['status']:#request['status'] in ('Approved','Rejected'):
+                status = approvaldata.status
+                for records in status:
+                    if records['ActionBy'] == request['ActionBy']:
+                        records['status'] = request['status']    
+                approvaldata.status=status
+                approvaldata.save()
+                return_object={"message":"Success"}
+            else:
+                return_object={
+                    'message': "Invalid request",   
+                }
+        except (Exception) as error:
+            print("Failed to approve data",error)
+            return_object={
+                'message': "Failed to approve data",
+                
+            }
+        return Response(return_object)
+    
+    
+    # #Don'uncomment it
+    # def get(self,request):
+    #     try:
+    #         request = request if isinstance(request,dict) else json.loads(request.body)
+    #         pending={'approvalEngUniqueID_id':[],'empId':[]}
+    #         if 'ActionBy' in request and request['ActionBy']:
+    #             flow_id=ApprovalFlow.objects.filter(approvalFlowName=request['flow_name']).values_list('flow_id')
+    #             approvaldata = ApprovalEngMasterData.objects.filter(flow_id=flow_id[0][0],status__icontains=request['ActionBy']).filter(approvalEngUniqueID__icontains=request['ActionBy']).values()
+    #         if 'empId' in request and request['empId'] and 'status' in request and request['status']:
+    #             if approvaldata:
+    #                 for data in approvaldata:
+    #                     for status in data['status']:
+    #                         if request['empId'] == status['ActionBy'] and request['status']== status['status']:
+    #                             pending['approvalEngUniqueID_id'].append(data['approvalEngUniqueID'])
+    #         else:
+    #             if approvaldata:
+    #                 for data in approvaldata:
+    #                     for status in data['status']:
+    #                         if request['empId'] == status['ActionBy']:
+    #                             pending['approvalEngUniqueID_id'].append(data['approvalEngUniqueID'])
+    #         employee_leave = list(EmpLeave.objects.filter(approvalEngUniqueID__in=pending['approvalEngUniqueID_id']).values())
+    #         approvaldata = list(ApprovalEngMasterData.objects.filter(approvalEngUniqueID__in=pending['approvalEngUniqueID_id']).values())
+    #         approval_data_dict = {}
+    #         for approve in approvaldata:
+    #             approval_data_dict[approve['approvalEngUniqueID']]=approve
+    #         for leave in employee_leave:
+    #             leave['status']=approval_data_dict[leave['approvalEngUniqueID_id']]['status']
+    #             leave['approvalReason']=approval_data_dict[leave['approvalEngUniqueID_id']]['approvalReason']
+    #             leave['rejectionReason']=approval_data_dict[leave['approvalEngUniqueID_id']]['rejectionReason']
+    #             leave['description']=approval_data_dict[leave['approvalEngUniqueID_id']]['description']
+    #             leave['justification']=approval_data_dict[leave['approvalEngUniqueID_id']]['justification']
+    #             leave['remarks']=approval_data_dict[leave['approvalEngUniqueID_id']]['remarks']
+    #             leave['comments']=approval_data_dict[leave['approvalEngUniqueID_id']]['comments']
+    #     except (Exception) as error:
+    #         print('error------>',error)
+    #     return Response(employee_leave)
+    
+    
+    
+    
+    # #not need to change with sp
+    # def put(self,request):
+    #     try:
+    #         return_object={}
+    #         request = request if isinstance(request,dict) else json.loads(request.body)
+    #         sql_query = 'SELECT "status", "approvalReason", "rejectionReason", "description", "justification", "remarks", "comments" FROM "ApprovalEngMasterData" where "approvalEngUniqueID" = '+ str(request['approvalEngUniqueID_id']) +';'
+    #         cursor= connection.cursor()
+    #         cursor.execute(sql_query)
+    #         columns = cursor.description 
+    #         approvaldata = [{columns[index][0]:column for index, column in enumerate(value)} for value in cursor.fetchall()]
+    #         # if 'status' in request and request['status']:
+    #         status = json.loads(approvaldata[0]['status'])
+    #         for records in status:
+    #             if records['ActionBy'] == request['ActionBy']:
+    #                 records['status'] = request['status']  
+    #         # if 'approvalReason' in request and request['approvalReason']:
+    #         approvalReason= json.loads(approvaldata[0]['approvalReason'])  
+    #         for records in approvalReason:
+    #             if records['ActionBy'] == request['ActionBy']:
+    #                 records['approvalReason'] = request['approvalReason'] 
+    #         # if 'rejectionReason' in request and request['rejectionReason']:
+    #         rejectionReason= json.loads(approvaldata[0]['rejectionReason'])  
+    #         for records in rejectionReason:
+    #             if records['ActionBy'] == request['ActionBy']:
+    #                 records['rejectionReason'] = request['description'] 
+    #         # if 'description' in request and request['description']:
+    #         description= json.loads(approvaldata[0]['description'])  
+    #         for records in description:
+    #             if records['ActionBy'] == request['ActionBy']:
+    #                 records['description'] = request['description'] 
+    #         # if 'justification' in request and request['justification']:
+    #         justification= json.loads(approvaldata[0]['justification'])  
+    #         for records in justification:
+    #             if records['ActionBy'] == request['ActionBy']:
+    #                 records['justification'] = request['justification']
+    #         # if 'remarks' in request and request['remarks']:
+    #         remarks= json.loads(approvaldata[0]['remarks'])  
+    #         for records in remarks:
+    #             if records['ActionBy'] == request['ActionBy']:
+    #                 records['remarks'] = request['remarks']
+    #         # if 'remarks' in request and request['remarks']:
+    #         comments= json.loads(approvaldata[0]['comments'])  
+    #         for records in comments:
+    #             if records['ActionBy'] == request['ActionBy']:
+    #                 records['comments'] = request['comments']  
+    #         status=json.dumps(status)
+    #         approvalReason=json.dumps(approvalReason)
+    #         rejectionReason=json.dumps(rejectionReason)
+    #         description=json.dumps(description)
+    #         justification=json.dumps(justification)
+    #         remarks=json.dumps(remarks)
+    #         comments=json.dumps(comments)
+    #         cursor.execute("call update_approval_status(%s, %s,%s,%s,%s,%s,%s,%s)",(int(request['approvalEngUniqueID_id']),status,approvalReason,rejectionReason,description,justification,remarks,comments))
+    #         cursor.close()
+    #         return_object={"message":"Success"}
+           
+    #     except (Exception) as error:
+    #         print("Failed to approve data",error)
+    #         return_object={
+    #             'message': "Failed to approve data",
+                
+    #         }
+    #     return Response(return_object)
+    
 
 
 
