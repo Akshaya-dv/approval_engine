@@ -1,0 +1,22 @@
+CREATE OR REPLACE PROCEDURE public.get_approvalstatus(
+	_actionby text,
+	_flowName text,
+	INOUT _result_one refcursor DEFAULT 'rs_approvaldata'::refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
+
+BEGIN
+
+  open _result_one for 
+  SELECT x.*
+        FROM public."ApprovalEngMasterData" x
+        WHERE x."flow_id" = (
+            SELECT f."approvalFlowId"
+            FROM public."ApprovalFlow" f
+            WHERE "approvalFlowName" = _flowName
+        ) AND
+        (LOWER("status"::text) LIKE LOWER(_actionby) OR UPPER("status"::text) LIKE UPPER(_actionby));
+
+END;
+$BODY$;
+

@@ -1,0 +1,127 @@
+CREATE OR REPLACE PROCEDURE public.post_approvaldata(
+	latestupdatedate timestamp with time zone,
+	flowname character varying,
+	empid integer,
+	requestraiseddatetime timestamp with time zone,
+	actiondatetime timestamp with time zone,
+	status character varying,
+	approvalreason character varying,
+	rejectionreason character varying,
+	description character varying,
+	justification character varying,
+	comment character varying,
+	remark character varying,
+	INOUT approvalid bigint)
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+     StatusArr text ;
+	 ApprovalReasonArr text;
+	 RejectionReasonArr text ;
+	 DescriptionArr text;
+	JustificationArr text ;
+	RemarksArr text ;
+	CommentsArr text ;
+	Level integer;
+	empIdExistsInAppHirarchy BOOLEAN;
+	empHirarchy integer;
+	rec_appHirarchy   record;
+    cur_appHirarchy  refcursor;
+    approvalflowid integer;
+    approval_id INTEGER;
+    varStatusArr jsonb;
+	varApprovalReasonArr jsonb;
+	varRejectionReasonArr jsonb;
+	varDescriptionArr jsonb;
+	varJustificationArr jsonb;
+	varRemarksArr jsonb;
+	varCommentsArr jsonb;
+BEGIN
+EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
+INTO approvalflowid USING flowname;
+EXECUTE  'SELECT "hirarchy" FROM public."ApprovalFlowHirarchy"
+        WHERE "approvalFlowId_id" =$1 AND "empId" = $2'
+		into empHirarchy using approvalflowid,empId;
+		
+SELECT EXISTS (select empHirarchy) INTO empIdExistsInAppHirarchy;
+
+    IF empHirarchy IS NOT NULL  THEN
+	   open cur_appHirarchy for execute
+		'select "empId","hirarchy"
+		from public."ApprovalFlowHirarchy"
+		where "approvalFlowId_id"=$1 and "hirarchy">$2
+		order by "hirarchy";' using approvalflowid,empHirarchy;
+        
+    ELSE
+	  open cur_appHirarchy for execute
+		'select "empId","hirarchy"
+		from public."ApprovalFlowHirarchy"
+		where "approvalFlowId_id"=$1
+		order by "hirarchy";' using approvalflowid;
+     
+    END IF;
+
+     StatusArr:='[{"Actionby":' || empId||',"status":"'||status||'","date":"'||current_timestamp||'","level":'||0||',"positioncode":"na"}';
+	 ApprovalReasonArr :='[{"Actionby":' || empId||',"approvalReason":"'||approvalReason||'","date":"'||current_timestamp||'","level":'||0||'}';
+	 RejectionReasonArr  :='[{"Actionby":' || empId||',"rejectionReason":"'||rejectionReason||'","date":"'||current_timestamp||'","level":'||0||'}';
+	 DescriptionArr  :='[{"Actionby":' || empId||',"description":"'||description||'","date":"'||current_timestamp||'","level":'||0||'}';
+	 JustificationArr  :='[{"Actionby":' || empId||',"justification":"'||justification||'","date":"'||current_timestamp||'","level":'||0||'}';
+	 RemarksArr  :='[{"Actionby":' || empId||',"remark":"'||remark||'","date":"'||current_timestamp||'","level":'||0||'}';
+	 CommentsArr  :='[{"Actionby":' || empId||',"comment":"'||comment||'","date":"'||current_timestamp||'","level":'||0||'}';
+     Level:=0;
+   loop
+    -- fetch row into the film
+      fetch cur_appHirarchy into rec_appHirarchy;
+    -- exit when no more row to fetch
+      exit when not found;
+       Level:=Level+1;
+    -- build the output
+     
+         StatusArr := StatusArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"status":"ApprovalPending","date":"na","level":'||Level||',"positioncode":"na"}';
+         ApprovalReasonArr:=ApprovalReasonArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"approvalReason":"na","date":"na","level":'||Level||'}';
+         RejectionReasonArr:=RejectionReasonArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"rejectionReason":"na","date":"na","level":'||Level||'}';
+         DescriptionArr:=DescriptionArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"description":"na","date":"na","level":'||Level||'}';
+         JustificationArr:=JustificationArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"justification":"na","date":"na","level":'||Level||'}';
+         RemarksArr:=RemarksArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"remark":"na","date":"na","level":'||Level||'}';
+         CommentsArr:=CommentsArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"comment":"na","date":"na","level":'||Level||'}';
+                  
+   end loop;
+   StatusArr := StatusArr || ']' ;
+         ApprovalReasonArr:=ApprovalReasonArr || ']' ;
+         RejectionReasonArr:=RejectionReasonArr || ']' ;
+         DescriptionArr:=DescriptionArr || ']' ;
+         JustificationArr:=JustificationArr || ']' ;
+         RemarksArr:=RemarksArr || ']' ;
+         CommentsArr:=CommentsArr ||']';
+   -- close the cursor
+   close cur_appHirarchy;
+   
+   select StatusArr::jsonb into varStatusArr ;
+   select ApprovalReasonArr::jsonb into varApprovalReasonArr;
+   select RejectionReasonArr::jsonb into varRejectionReasonArr ;
+   select DescriptionArr::jsonb into varDescriptionArr ;
+   select JustificationArr::jsonb into varJustificationArr;
+   select RemarksArr::jsonb into varRemarksArr;
+   select CommentsArr::jsonb  into varCommentsArr ;
+   
+	-- Insert into ApprovalEngMasterData and get the approvalEngUniqueID
+    INSERT INTO public."ApprovalEngMasterData"(
+        "status", "approvalReason", "rejectionReason", "description", "justification", "remarks", "comments", "latestUpdateDate", "flow_id","isDeleted"
+    )
+    VALUES (
+        varstatusarr, varapprovalReasonarr, varrejectionReasonarr, vardescriptionarr, varjustificationarr, varremarksarr, varcommentsarr, latestUpdateDate, approvalflowid,False
+    )
+    RETURNING "approvalEngUniqueID" INTO approvalid;
+
+--     -- Insert int
+--     INSERT INTO public."EmpLeave"(
+--         "empId", "pendingActionFrom", "requestRaisedDatetime", "actionDatetime", "approvalEngUniqueID_id"
+--     )
+--     VALUES (
+--         empid,'[{}]', requestRaisedDatetime, actionDatetime, approvalid
+--     );
+   
+END;
+$BODY$;
+
+
