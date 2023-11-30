@@ -29,8 +29,6 @@ class ApprovalEngMasterData(models.Model):
     comments =JSONField()
     latestUpdateDate =models.DateTimeField(max_length=255) 
     flow=models.ForeignKey(ApprovalFlow,null=False,on_delete=models.CASCADE)
+    isDeleted=models.BooleanField(default=False)
     class Meta:
         db_table="ApprovalEngMasterData"
-
-
-
