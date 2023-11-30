@@ -16,6 +16,7 @@ from psycopg2.extras import Json
 
 
 
+
 # Create your views here.
 class empLeave(APIView):
     def post(self,request):
