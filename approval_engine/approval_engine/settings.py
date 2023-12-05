@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'approval_engine',
     'e_sep',
     'e_leave',
+    'gems',
     'rest_framework'
 ]
 

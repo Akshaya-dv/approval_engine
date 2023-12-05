@@ -22,5 +22,5 @@ urlpatterns = [
     path('sep/',include('e_sep.urls')),
     path('leave/',include('e_leave.urls')),
     path('flow',FlowName.as_view()),
-    path('flow_hirarchy',Hirarchy.as_view())
+    path('flow_hirarchy',Hirarchy.as_view()) 
 ]
