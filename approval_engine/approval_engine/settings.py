@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'crud',
+    'approval_engine',
+    'e_sep',
+    'e_leave',
     'rest_framework'
 ]
 
@@ -80,9 +82,9 @@ DATABASES = {
        'ENGINE': 'django.db.backends.postgresql',  
         'NAME': 'Approval Engine',  
         'USER':'postgres',  
-        'PASSWORD':'Admin@123',  
-        'HOST':'172.16.0.198',  
-        'PORT':'5432'  
+        'PASSWORD':'1234',  
+        'HOST':'localhost',  
+        'PORT':'5433'  
     }
 }
 
