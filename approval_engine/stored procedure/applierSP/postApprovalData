@@ -61,13 +61,13 @@ SELECT EXISTS (select empHirarchy) INTO empIdExistsInAppHirarchy;
      
     END IF;
 
-     StatusArr:='[{"Actionby":' || empId||',"status":"'||status||'","date":"'||current_timestamp||'","level":'||0||',"positioncode":"na"}';
-	 ApprovalReasonArr :='[{"Actionby":' || empId||',"approvalReason":"'||approvalReason||'","date":"'||current_timestamp||'","level":'||0||'}';
-	 RejectionReasonArr  :='[{"Actionby":' || empId||',"rejectionReason":"'||rejectionReason||'","date":"'||current_timestamp||'","level":'||0||'}';
-	 DescriptionArr  :='[{"Actionby":' || empId||',"description":"'||description||'","date":"'||current_timestamp||'","level":'||0||'}';
-	 JustificationArr  :='[{"Actionby":' || empId||',"justification":"'||justification||'","date":"'||current_timestamp||'","level":'||0||'}';
-	 RemarksArr  :='[{"Actionby":' || empId||',"remark":"'||remark||'","date":"'||current_timestamp||'","level":'||0||'}';
-	 CommentsArr  :='[{"Actionby":' || empId||',"comment":"'||comment||'","date":"'||current_timestamp||'","level":'||0||'}';
+     StatusArr:='[{"actionby":' || empId||',"status":"'||status||'","date":"'||current_timestamp||'","level":'||0||',"positioncode":"na"}';
+	 ApprovalReasonArr :='[{"actionby":' || empId||',"approvalReason":"'||approvalReason||'","date":"'||current_timestamp||'","level":'||0||'}';
+	 RejectionReasonArr  :='[{"actionby":' || empId||',"rejectionReason":"'||rejectionReason||'","date":"'||current_timestamp||'","level":'||0||'}';
+	 DescriptionArr  :='[{"actionby":' || empId||',"description":"'||description||'","date":"'||current_timestamp||'","level":'||0||'}';
+	 JustificationArr  :='[{"actionby":' || empId||',"justification":"'||justification||'","date":"'||current_timestamp||'","level":'||0||'}';
+	 RemarksArr  :='[{"actionby":' || empId||',"remark":"'||remark||'","date":"'||current_timestamp||'","level":'||0||'}';
+	 CommentsArr  :='[{"actionby":' || empId||',"comment":"'||comment||'","date":"'||current_timestamp||'","level":'||0||'}';
      Level:=0;
    loop
     -- fetch row into the film
@@ -77,13 +77,13 @@ SELECT EXISTS (select empHirarchy) INTO empIdExistsInAppHirarchy;
        Level:=Level+1;
     -- build the output
      
-         StatusArr := StatusArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"status":"ApprovalPending","date":"na","level":'||Level||',"positioncode":"na"}';
-         ApprovalReasonArr:=ApprovalReasonArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"approvalReason":"na","date":"na","level":'||Level||'}';
-         RejectionReasonArr:=RejectionReasonArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"rejectionReason":"na","date":"na","level":'||Level||'}';
-         DescriptionArr:=DescriptionArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"description":"na","date":"na","level":'||Level||'}';
-         JustificationArr:=JustificationArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"justification":"na","date":"na","level":'||Level||'}';
-         RemarksArr:=RemarksArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"remark":"na","date":"na","level":'||Level||'}';
-         CommentsArr:=CommentsArr || ',{"Actionby":' || rec_appHirarchy."empId"||',"comment":"na","date":"na","level":'||Level||'}';
+         StatusArr := StatusArr || ',{"actionby":' || rec_appHirarchy."empId"||',"status":"ApprovalPending","date":"na","level":'||Level||',"positioncode":"na"}';
+         ApprovalReasonArr:=ApprovalReasonArr || ',{"actionby":' || rec_appHirarchy."empId"||',"approvalReason":"na","date":"na","level":'||Level||'}';
+         RejectionReasonArr:=RejectionReasonArr || ',{"actionby":' || rec_appHirarchy."empId"||',"rejectionReason":"na","date":"na","level":'||Level||'}';
+         DescriptionArr:=DescriptionArr || ',{"actionby":' || rec_appHirarchy."empId"||',"description":"na","date":"na","level":'||Level||'}';
+         JustificationArr:=JustificationArr || ',{"actionby":' || rec_appHirarchy."empId"||',"justification":"na","date":"na","level":'||Level||'}';
+         RemarksArr:=RemarksArr || ',{"actionby":' || rec_appHirarchy."empId"||',"remark":"na","date":"na","level":'||Level||'}';
+         CommentsArr:=CommentsArr || ',{"actionby":' || rec_appHirarchy."empId"||',"comment":"na","date":"na","level":'||Level||'}';
                   
    end loop;
    StatusArr := StatusArr || ']' ;

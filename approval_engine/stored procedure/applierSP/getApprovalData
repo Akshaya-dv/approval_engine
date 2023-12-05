@@ -10,7 +10,7 @@ BEGIN
 EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
 INTO approvalflowid USING _flowname;
   open _result_one for 
-  SELECT * FROM public."ApprovalEngMasterData" WHERE ("status"->0->>'Actionby') = _empId::text and "flow_id"=approvalflowid;
+  SELECT * FROM public."ApprovalEngMasterData" WHERE ("status"->0->>'actionby') = _empId::text and "flow_id"=approvalflowid;
 
 END;
 $BODY$;
