@@ -1,0 +1,16 @@
+CREATE OR REPLACE PROCEDURE public.get_flow(
+	flowname character varying,
+	INOUT _result_cursor refcursor DEFAULT 'flow'::refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
+BEGIN
+    IF flowname IS NOT NULL  THEN
+	   open _result_cursor for execute
+		'SELECT "approvalFlowId","approvalFlowName" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
+		using flowname;    
+    ELSE
+	  open _result_cursor for execute
+		'SELECT "approvalFlowId","approvalFlowName" FROM public."ApprovalFlow"';
+    END IF;
+END;
+$BODY$;

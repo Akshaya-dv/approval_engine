@@ -1,0 +1,36 @@
+CREATE OR REPLACE PROCEDURE public.update_flow_hirarchy(
+	flowname character varying,
+	new_empid integer,
+	hirarchy integer,
+	INOUT result text)
+LANGUAGE 'plpgsql'
+AS $BODY$
+declare
+approvalflowid int;
+empHirarchy int;
+
+BEGIN
+EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
+INTO approvalflowid USING flowname;
+
+    IF approvalflowid IS NOT NULL  THEN
+	EXECUTE  'SELECT "empId" FROM public."ApprovalFlowHirarchy"
+        WHERE "approvalFlowId_id" =$1 AND "hirarchy" = $2'
+		into empHirarchy using approvalflowid,hirarchy;
+
+    IF empHirarchy IS NOT NULL  THEN
+	EXECUTE  'UPDATE public."ApprovalFlowHirarchy"
+	SET  "empId"=$1
+	WHERE "hirarchy"=$2 and "approvalFlowId_id"= $3;'
+		using new_empid ,hirarchy,approvalflowid;
+	  result:='updated';
+    ELSE
+	   result:='recordNotPresent';
+    END IF;
+	   
+    ELSE
+		 result:='flowNameDoesnotExists';
+    END IF;
+
+END;
+$BODY$;
