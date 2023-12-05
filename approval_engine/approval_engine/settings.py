@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'crud',
+    'approval_engine',
+    'e_sep',
+    'e_leave',
     'rest_framework'
 ]
 
@@ -78,10 +80,10 @@ WSGI_APPLICATION = 'approval_engine.wsgi.application'
 DATABASES = {
     'default': {
        'ENGINE': 'django.db.backends.postgresql',  
-        'NAME': 'Approval Engine',  
+        'NAME': 'Approval',  
         'USER':'postgres',  
-        'PASSWORD':'Admin@123',  
-        'HOST':'172.16.0.198',  
+        'PASSWORD':'1234',  
+        'HOST':'localhost',  
         'PORT':'5432'  
     }
 }
