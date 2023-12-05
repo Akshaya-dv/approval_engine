@@ -80,11 +80,11 @@ WSGI_APPLICATION = 'approval_engine.wsgi.application'
 DATABASES = {
     'default': {
        'ENGINE': 'django.db.backends.postgresql',  
-        'NAME': 'Approval Engine',  
+        'NAME': 'Approval',  
         'USER':'postgres',  
         'PASSWORD':'1234',  
         'HOST':'localhost',  
-        'PORT':'5433'  
+        'PORT':'5432'  
     }
 }
 
