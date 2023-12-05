@@ -54,10 +54,8 @@ class Approver:
                 status,approvalReason,rejectionReason,description,justification,remarks,comments=[],[],[],[],[],[],[]
                 for key,records in approvaldata[0].items():
                     if key in ['status','approvalReason','rejectionReason','description','justification','remarks','comments']:
-                        print(key)
                         for data in records:
                             append_obj=data
-                            print()
                             if data['actionby']==request['actionby']:
                                 for updt_key,update_value in data.items():
                                         append_obj[updt_key]=request[updt_key] if updt_key in request else update_value
