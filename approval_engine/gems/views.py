@@ -3,7 +3,9 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from approval_engine.applier import Applier
-from gems.models import GemProjectGeneration
+from approval_engine.models import ApprovalEngMasterData
+from approval_engine.constants import POST_PARAMETER_CHECK
+from gems.models import GemsProjectGeneration
  
 # Create your views here.
  
@@ -25,12 +27,14 @@ from gems.models import GemProjectGeneration
 class ProjectGeneration(APIView):
     def post(self,request):
         try:
-            request= request if isinstance(request,dict) else json.loads(request.body)
+            request1= request if isinstance(request,dict) else json.loads(request.body)
             return_object={}
-            if request.get('pgtitle') and request.get('pgdescription') and request.get('skills'):
+            if request1.get('pgtitle') and request1.get('pgdescription') and request1.get('skills') and all(key in request1 for key in POST_PARAMETER_CHECK):
+                print("0000000000")
                 approvalId = Applier.post(request)['result']
+                print(type(approvalId))
+                GemsProjectGeneration(pgTitle=request1.get('pgtitle'),pgDescription=request1.get('pgdescription'),skils=request1.get('skills'),created_by=request1.get('empId'),approvalEngUniqueID_id=approvalId).save()
                 
-                GemProjectGeneration(pgTitle=request.get('pgtitle'),pgDescription=request.get('pgdescription'),skills=request.get('skills'))
             else:
                 return_object={
                     "status":400,
@@ -45,10 +49,24 @@ class ProjectGeneration(APIView):
         return JsonResponse(return_object)
     def get(self,request):
         try:
-            request= request if isinstance(request,dict) else json.loads(request.body)
+            request1= request if isinstance(request,dict) else json.loads(request.body)
             return_object={}
-            
-            pass
+            if request1.get('empId') and request1.get('flowName'):
+                project_data=list(GemsProjectGeneration.objects.filter(created_by=request1.get('empId')).values())
+                project_status = Applier.get(request)
+                return_object={
+                    "status":200,
+                    "message":"Data retrieved successfully",
+                    "result":{
+                        "project_details":project_data,
+                        "project_status":project_status
+                    }
+                }
+            else:
+                return_object={
+                    "status":400,
+                    "message":"Invalid request body"
+                }
         except (Exception) as error:
             print("Project generation post issue is ------->"+str(error))
             return_object={
