@@ -151,6 +151,7 @@ class Applier:
                     # Commit the transaction
                     cursor.execute("COMMIT;")
                     formatedApprovalData = formating_response(approvaldata)
+                    cursor.close()
                 
                 return formatedApprovalData
             except json.JSONDecodeError as e:
@@ -173,6 +174,7 @@ class Applier:
                     deletedmessage = cursor.fetchall()
                     # Commit the transaction
                     cursor.execute("COMMIT;")
+                    cursor.close()
 
                     return_object={
                         "status":200,

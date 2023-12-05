@@ -65,12 +65,12 @@ class Empsep1(APIView):
                     
                     approvaldata=Applier.get(request)
                     
-                    leaveData=get_empSep(EmpId)
+                    eSepData=get_empSep(EmpId)
                     
                     return_object={
                         "status":200,
                         "message": 'E-sep data retrieved successfully',
-                        "result":{'E-sep-data':leaveData,"ApprovalData":approvaldata}
+                        "result":{'E-sep-Data':eSepData,"ApprovalData":approvaldata}
                     }
                 else:
                     return_object={
