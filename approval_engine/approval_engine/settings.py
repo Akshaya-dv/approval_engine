@@ -37,7 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'crud',
+    'approval_engine',
+    'e_sep',
+    'e_leave',
+    'gems',
     'rest_framework'
 ]
 
