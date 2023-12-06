@@ -58,7 +58,10 @@ class Approver:
                             append_obj=data
                             if data['actionby']==request['actionby']:
                                 for updt_key,update_value in data.items():
-                                        append_obj[updt_key]=request[updt_key] if updt_key in request else update_value
+                                        append_obj[updt_key]=request[updt_key] if updt_key in request and updt_key != 'date' else update_value
+                                        if updt_key=='date':
+                                            append_obj[updt_key]=str(datetime.datetime.now())
+                                         
                             if key == 'status':
                                 status.append(append_obj)
                             if key == 'approvalReason':
