@@ -44,11 +44,17 @@ class ApplicantRequest(APIView):
                 approvaldata=Applier.get(request)
                 
                 gemsApplicationData=get_gemsApplication(body.get('empId'))
-                print(gemsApplicationData)
+                data_dict={}
+                for data in gemsApplicationData:
+                    data_dict[data['approvalEngUniqueID_id']]=data
+                for data in approvaldata:
+                    data['applicantion_data']=data_dict.get(data['approvalEngUniqueID']) if data_dict.get(data['approvalEngUniqueID']) else ""
+                    # gemsApplicationDatadict=dict(data)
+                  
                 return_object={
                         "status":200,
                         "message": 'Gems Application data retrieved successfully',
-                        "result":{'Gems-Application-Data':gemsApplicationData,"ApprovalData":approvaldata}
+                        "result":approvaldata
                     }
                 return JsonResponse(return_object)
             else:
