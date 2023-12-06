@@ -1,0 +1,23 @@
+CREATE OR REPLACE PROCEDURE public.get_delete_approvalstatus(
+	_approvalenguniqeid integer,
+	_selectdelete integer,
+	INOUT _result_one refcursor DEFAULT 'selctedrow'::refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
+
+BEGIN
+if _selectDelete=1 then
+  open _result_one for 
+  SELECT * from public."ApprovalEngMasterData"
+  where "approvalEngUniqueID"=_approvalEngUniqeId;
+end if;
+if _selectDelete=0 then
+  UPDATE public."ApprovalEngMasterData"
+	SET "isDeleted"=True
+	where "approvalEngUniqueID"=_approvalEngUniqeId;
+  open _result_one for 
+  SELECT 'Record is soft Deleted';
+end if;
+
+END;
+$BODY$;
