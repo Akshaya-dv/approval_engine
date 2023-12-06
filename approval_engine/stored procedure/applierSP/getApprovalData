@@ -10,9 +10,9 @@ BEGIN
 EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
 INTO approvalflowid USING _flowname;
   open _result_one for 
-  SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id,"isDeleted"
+
+  SELECT "approvalEngUniqueID", "status", "approvalReason", "rejectionReason", "description", "justification", "remarks", "comments", "latestUpdateDate", "flow_id","isDeleted"
   FROM public."ApprovalEngMasterData" WHERE ("status"->0->>'actionby') = _empId::text and "flow_id"=approvalflowid ;
---  WHERE "flow_id" =approvalflowid AND
---         "status" LIKE %_empId::text% and "status"->>'level');
+
 END;
 $BODY$;
