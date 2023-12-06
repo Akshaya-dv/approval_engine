@@ -1,0 +1,16 @@
+CREATE OR REPLACE PROCEDURE public.update_approval_status(IN _approvalenguniqueid integer, IN _status jsonb, IN _approvalreason jsonb, IN _rejectionreason jsonb, IN _description jsonb, IN _justification jsonb, IN _remarks jsonb, IN _comments jsonb)
+ LANGUAGE plpgsql
+AS $procedure$
+	BEGIN
+	update "ApprovalEngMasterData" set "status" = _status::jsonb,
+	"approvalReason" = _approvalReason::jsonb,
+	"rejectionReason" = _rejectionReason::jsonb,
+	"description" = _description::jsonb,
+	"justification" = _justification::jsonb,
+	"remarks" = _remarks::jsonb,
+	"comments" = _comments::jsonb 
+	
+where "approvalEngUniqueID" = _approvalEngUniqueID;
+	END;
+$procedure$
+;
