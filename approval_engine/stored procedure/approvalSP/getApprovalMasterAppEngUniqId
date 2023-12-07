@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE public.get_ApprovalMaster_AppEngUniqId1(
+CREATE OR REPLACE PROCEDURE public.get_ApprovalMaster_AppEngUniqId(
 _approvalenguniqeid integer,
 inout _cursor refcursor 
 DEFAULT 'rs_approvaldata'::refcursor
