@@ -1,0 +1,16 @@
+CREATE OR REPLACE PROCEDURE public.get_ApprovalMaster_AppEngUniqId(
+_approvalenguniqeid integer,
+inout _cursor refcursor 
+DEFAULT 'rs_approvaldata'::refcursor
+)  
+LANGUAGE 'plpgsql'
+AS $BODY$
+begin
+	open _cursor for
+   SELECT "approvalEngUniqueID", "status", 
+   "approvalReason", "rejectionReason", "description", 
+   "justification", "remarks", "comments", "latestUpdateDate", 
+   "flow_id","isDeleted" from public."ApprovalEngMasterData"
+  where "approvalEngUniqueID"=_approvalenguniqeid;
+END;
+$BODY$;

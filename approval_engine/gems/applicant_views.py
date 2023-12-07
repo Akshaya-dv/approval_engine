@@ -77,6 +77,9 @@ class Application_approver(APIView):
             request= request if isinstance(request,dict) else json.loads(request.body)
             return_obj={}
             return_obj=Approver.put(request)
+            if request.get('applicantionRequestID')  and request.get('attachment'):
+                GemsApplication.objects.filter(applicantion_request_ID=request.get('applicantionRequestID')).update(attachment=request.get('attachment'))
+            
             return return_obj
         except (Exception) as error:
             print("-------->approver-put",str(error))

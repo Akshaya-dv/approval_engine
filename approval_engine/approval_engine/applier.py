@@ -42,11 +42,14 @@ class Applier:
                                   'comment':Commentsobj,
                                   'remark':Remarksobj}
                 if extraKeys:
+                    
                     for columnkey in extraKeys.keys():
+                        
                         if (columnkey in columnObjMapping.keys()) and type(extraKeys[columnkey])==dict:
+                            
                             for extraKey in extraKeys[columnkey].keys():
-                                if not(extraKey in defaultkey) and extraKeys[columnkey][extraKey]:
-                                  
+                                
+                                if not(extraKey in defaultkey) :
                                     (columnObjMapping[columnkey])[extraKey]=extraKeys[columnkey][extraKey]
                                 else:
                                     return_object={
@@ -58,6 +61,7 @@ class Applier:
                                       "status":400,
                                       "message":f"The keys in extrakeys request body sholud json object key format"
                                       }  
+           
                 statusStrObj=str(columnObjMapping['status'])
                 StatusArr=[json.loads(statusStrObj.replace("'", "\""))]
                 approvalReasonStrObj=str(columnObjMapping['approvalReason'])
