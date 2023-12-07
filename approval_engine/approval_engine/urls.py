@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from .flow_hirarchy import FlowName,Hirarchy
-from .sp_migration import sp_api
+
 
 urlpatterns = [
     path('sep/',include('e_sep.urls')),
@@ -25,5 +25,5 @@ urlpatterns = [
     path('gems/',include('gems.urls')),
     path('flow',FlowName.as_view()),
     path('flow_hirarchy',Hirarchy.as_view()) ,
-    path('sp',sp_api) ,
+ 
 ]

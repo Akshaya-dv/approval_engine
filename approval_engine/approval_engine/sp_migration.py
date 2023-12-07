@@ -1,7 +1,7 @@
 from django.db import connection
-from django.http import JsonResponse
 
-def sp_api(request):
+
+def spCreation():
 
 		get_approvaldata="""CREATE OR REPLACE PROCEDURE public.get_approvaldata(
 			_empid integer,
@@ -314,7 +314,6 @@ def sp_api(request):
 		$BODY$;"""
 
 
-
 		spList=[get_approvaldata,
 				get_delete_approvalstatus,
 				get_hirarchy,
@@ -328,14 +327,19 @@ def sp_api(request):
 				insert_flow_hirarchy,
 				update_flow_hirarchy]
 
-
 		cursor=connection.cursor()
 		for sp in spList:
 			cursor.execute(sp)
 
 		cursor.close()
-		return JsonResponse({"message":"all ok"})
+		return ({"status":200,
+			"message":{
+				"DB":"DataBase connected successfully ",
+				"SP":"Stored Procedures are created successfully"
+			}})
 
+createSp=spCreation()
+print(createSp)
 
 
 # post_approvaldata="""CREATE OR REPLACE PROCEDURE public.post_approvaldata(
