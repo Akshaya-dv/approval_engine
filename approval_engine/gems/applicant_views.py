@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from approval_engine.constants import POST_PARAMETER_CHECK
 from approval_engine.applier import Applier
 from approval_engine.approver import Approver
-from gems.models import GemsApplication
+from gems.models import GemsApplication,GemsProjectGeneration
 
 
 class ApplicantRequest(APIView):
@@ -15,12 +15,20 @@ class ApplicantRequest(APIView):
             return_object={}
             
             if  body.get('projectId') and body.get('attachment') and all(key in body for key in POST_PARAMETER_CHECK):
-                approvalId=Applier.post(request)['result']
-                insert_gemsApplication(body.get('empId'),body.get('projectId'),body.get('requestRaisedDatetime'),body.get('attachment'),body.get('status'),approvalId)
-                return_object={
-                    "status":200,
-                    "message":"Inserted successfully"
-                }   
+                projectData = list(GemsProjectGeneration.objects.filter(pgId=body.get('projectId')).values('pgId'))
+                if(projectData):
+                    approvalId=Applier.post(request)['result']
+                    insert_gemsApplication(body.get('empId'),body.get('projectId'),body.get('requestRaisedDatetime'),body.get('attachment'),body.get('status'),approvalId)
+                    return_object={
+                        "status":200,
+                        "message":"Inserted successfully"
+                    }  
+                else:
+                    return_object={
+                        "status":400,
+                        "message":"Their is no project with corresponding projectId "
+                    }  
+
                 
             else:
                 return_object={
@@ -98,7 +106,7 @@ class Application_approver(APIView):
 
 
 def insert_gemsApplication(ApplicantId,ProjectId,Request_raised_datetime,Attachment,Status,ApprovalEngUniqueID):
-    data=GemsApplication(applicantId=ApplicantId,projectId=ProjectId,request_raised_datetime=Request_raised_datetime,attachment=Attachment,status=Status,approvalEngUniqueID_id=ApprovalEngUniqueID,isDeleted=False)
+    data=GemsApplication(applicantId=ApplicantId,projectId_id=ProjectId,request_raised_datetime=Request_raised_datetime,attachment=Attachment,status=Status,approvalEngUniqueID_id=ApprovalEngUniqueID,isDeleted=False)
     data.save()
 
 

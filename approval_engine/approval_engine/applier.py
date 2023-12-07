@@ -137,8 +137,6 @@ class Applier:
     
         return return_object
                
-    
-
     def get(request):
         if 'application/json' in request.content_type:
             try:
