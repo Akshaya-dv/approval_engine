@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from .flow_hirarchy import FlowName,Hirarchy
+from .approval_flow_status import ApprovalFlowStatus
 
 
 urlpatterns = [
@@ -25,5 +26,6 @@ urlpatterns = [
     path('gems/',include('gems.urls')),
     path('flow',FlowName.as_view()),
     path('flow_hirarchy',Hirarchy.as_view()) ,
+    path('approval_flow_status',ApprovalFlowStatus.as_view())
  
 ]

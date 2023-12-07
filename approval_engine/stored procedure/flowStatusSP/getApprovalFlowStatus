@@ -1,6 +1,5 @@
 
-CREATE OR REPLACE PROCEDURE public.get_approvalstatus(
-	_actionby int,
+CREATE OR REPLACE PROCEDURE public.get_approval_flow_status(
 	_flowname text,
 	_status text,
 	INOUT _result_one refcursor DEFAULT 'rs_approvaldata'::refcursor)
@@ -8,30 +7,32 @@ LANGUAGE 'plpgsql'
 AS $BODY$
 declare
 		approvalflowid int;
+		maxhirarchy int;
 		BEGIN
-		EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
-		INTO approvalflowid USING _flowname;
+		EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1  group by "approvalFlowId";' 
+		INTO  approvalflowid USING _flowname;
+		EXECUTE 'select max("hirarchy")
+				from public."ApprovalFlowHirarchy"
+				where "approvalFlowId_id"=$1;'
+				INTO maxhirarchy using approvalflowid;
+				
 			 IF _status is not null then
 			 open _result_one for 
 		        SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id, "isDeleted"
 				FROM public."ApprovalEngMasterData" 
 				WHERE "flow_id" =approvalflowid AND exists( SELECT 1
 														   FROM jsonb_array_elements(status) AS s
-														   WHERE s->>'actionby' =_actionby ::text 
-														   and s->>'level' <> '0' 
+														   WHERE
+														    s->>'level' = maxhirarchy::text 
 														   and s->>'status'=_status );
 			
 			 ELSE
 			 open _result_one for 
 		        SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id, "isDeleted"
 				FROM public."ApprovalEngMasterData" 
-				WHERE "flow_id" =approvalflowid AND exists( SELECT 1 
-														   FROM jsonb_array_elements(status) AS s 
-														   WHERE s->>'actionby' =_actionby ::text 
-														   and s->>'level' <> '0');
+				WHERE "flow_id" =approvalflowid ;
 			 END IF;
 
 		END;
 		
 $BODY$;
-

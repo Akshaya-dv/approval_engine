@@ -1,14 +1,13 @@
 from django.db import connection
 
-
 def spCreation():
 
 		get_approvaldata="""CREATE OR REPLACE PROCEDURE public.get_approvaldata(
-			_empid integer,
-			_flowname text,
-			INOUT _result_one refcursor DEFAULT 'rs_approvaldata'::refcursor)
-		LANGUAGE 'plpgsql'
-		AS $BODY$
+	_empid integer,
+	_flowname text,
+	INOUT _result_one refcursor DEFAULT 'rs_approvaldata'::refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
 		declare
 		approvalflowid int;
 		BEGIN
@@ -16,10 +15,15 @@ def spCreation():
 		INTO approvalflowid USING _flowname;
 		open _result_one for 
 		SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id,"isDeleted"
-		FROM public."ApprovalEngMasterData" WHERE ("status"->0->>'actionby') = _empId::text and "flow_id"=approvalflowid ;
+		FROM public."ApprovalEngMasterData" WHERE exists( SELECT 1
+														   FROM jsonb_array_elements(status) AS s
+														   WHERE s->>'actionby' =_empid ::text 
+														   and s->>'level' = '0' 
+														  ) and "flow_id"=approvalflowid ;
 
 		END;
-		$BODY$;
+		
+$BODY$;
 		"""
 
 		get_delete_approvalstatus="""CREATE OR REPLACE PROCEDURE public.get_delete_approvalstatus(
@@ -112,26 +116,40 @@ def spCreation():
 		$BODY$;"""
 
 		get_approvalstatus="""CREATE OR REPLACE PROCEDURE public.get_approvalstatus(
-			_actionby text,
-			_flowname text,
-			INOUT _result_one refcursor DEFAULT 'rs_approvaldata'::refcursor)
-		LANGUAGE 'plpgsql'
-		AS $BODY$
-
+	_actionby int,
+	_flowname text,
+	_status text,
+	INOUT _result_one refcursor DEFAULT 'rs_approvaldata'::refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
+declare
+		approvalflowid int;
 		BEGIN
-
-		open _result_one for 
-		SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id, "isDeleted"
+		EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
+		INTO approvalflowid USING _flowname;
+			 IF _status is not null then
+			 open _result_one for 
+		        SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id, "isDeleted"
 				FROM public."ApprovalEngMasterData" 
-				WHERE "flow_id" = (
-					SELECT f."approvalFlowId"
-					FROM public."ApprovalFlow" f
-					WHERE f."approvalFlowName" = _flowName
-				) AND
-				(LOWER("status"::text) LIKE LOWER(_actionby) OR UPPER("status"::text) LIKE UPPER(_actionby));
+				WHERE "flow_id" =approvalflowid AND exists( SELECT 1
+														   FROM jsonb_array_elements(status) AS s
+														   WHERE s->>'actionby' =_actionby ::text 
+														   and s->>'level' <> '0' 
+														   and s->>'status'=_status );
+			
+			 ELSE
+			 open _result_one for 
+		        SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id, "isDeleted"
+				FROM public."ApprovalEngMasterData" 
+				WHERE "flow_id" =approvalflowid AND exists( SELECT 1 
+														   FROM jsonb_array_elements(status) AS s 
+														   WHERE s->>'actionby' =_actionby ::text 
+														   and s->>'level' <> '0');
+			 END IF;
 
 		END;
-		$BODY$;
+		
+$BODY$;
 		"""
 
 		get_ApprovalMaster_AppEngUniqId1="""CREATE OR REPLACE PROCEDURE public.get_ApprovalMaster_AppEngUniqId(
@@ -312,7 +330,44 @@ def spCreation():
 
 		END;
 		$BODY$;"""
+        
+		get_approval_flow_status="""CREATE OR REPLACE PROCEDURE public.get_approval_flow_status(
+	_flowname text,
+	_status text,
+	INOUT _result_one refcursor DEFAULT 'rs_approvaldata'::refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
+declare
+		approvalflowid int;
+		maxhirarchy int;
+		BEGIN
+		EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1  group by "approvalFlowId";' 
+		INTO  approvalflowid USING _flowname;
+		EXECUTE 'select max("hirarchy")
+				from public."ApprovalFlowHirarchy"
+				where "approvalFlowId_id"=$1;'
+				INTO maxhirarchy using approvalflowid;
+				
+			 IF _status is not null then
+			 open _result_one for 
+		        SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id, "isDeleted"
+				FROM public."ApprovalEngMasterData" 
+				WHERE "flow_id" =approvalflowid AND exists( SELECT 1
+														   FROM jsonb_array_elements(status) AS s
+														   WHERE
+														    s->>'level' = maxhirarchy::text 
+														   and s->>'status'=_status );
+			
+			 ELSE
+			 open _result_one for 
+		        SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id, "isDeleted"
+				FROM public."ApprovalEngMasterData" 
+				WHERE "flow_id" =approvalflowid ;
+			 END IF;
 
+		END;
+		
+$BODY$;"""
 
 		spList=[get_approvaldata,
 				get_delete_approvalstatus,
@@ -325,21 +380,24 @@ def spCreation():
 				get_flow_hirarchy,
 				insert_flow,
 				insert_flow_hirarchy,
-				update_flow_hirarchy]
+				update_flow_hirarchy,
+				get_approval_flow_status]
+
 
 		cursor=connection.cursor()
 		for sp in spList:
 			cursor.execute(sp)
 
+
 		cursor.close()
-		return ({"status":200,
+		return {"status":200,
 			"message":{
 				"DB":"DataBase connected successfully ",
 				"SP":"Stored Procedures are created successfully"
-			}})
+			}}
 
-createSp=spCreation()
-print(createSp)
+# print("......dfy")
+# # spCreation()
 
 
 # post_approvaldata="""CREATE OR REPLACE PROCEDURE public.post_approvaldata(
