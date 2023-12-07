@@ -1,0 +1,30 @@
+from django.db import migrations
+
+sql="""
+CREATE OR REPLACE PROCEDURE public.get_approvaldata1(
+	_empid integer,
+	_flowname text,
+	INOUT _result_one refcursor DEFAULT 'rs_approvaldata'::refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
+declare
+approvalflowid int;
+BEGIN
+EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
+INTO approvalflowid USING _flowname;
+  open _result_one for 
+  SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id,"isDeleted"
+  FROM public."ApprovalEngMasterData" WHERE ("status"->0->>'actionby') = _empId::text and "flow_id"=approvalflowid ;
+
+END;
+$BODY$;
+"""
+class Migration(migrations.Migration):
+
+    dependencies = [
+       
+    ]
+
+    operations = [
+        migrations.RunSQL(sql),
+    ]

@@ -9,7 +9,7 @@ AS $procedure$
 	"justification" = _justification::jsonb,
 	"remarks" = _remarks::jsonb,
 	"comments" = _comments::jsonb 
-	
+
 where "approvalEngUniqueID" = _approvalEngUniqueID;
 	END;
 $procedure$
