@@ -53,7 +53,7 @@ class Approver:
             cursor=connection.cursor()
             cursor.execute("BEGIN;")
             # Call the stored procedure
-            cursor.execute(' CALL get_ApprovalMaster_AppEngUniqId1(%s); ',[request.get('approvalEngUniqueID_id')])
+            cursor.execute(' CALL get_ApprovalMaster_AppEngUniqId(%s); ',[request.get('approvalEngUniqueID_id')])
             # Fetch all from the result cursor
             cursor.execute('FETCH ALL FROM "rs_approvaldata";')
             approvaldata_status = cursor.fetchall()
