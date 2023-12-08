@@ -1,6 +1,8 @@
 import json
 from django.db import connection
-from django.http import JsonResponse
+
+from rest_framework.response import Response
+
 from .common_function import formating_response
 from .constants import *
 from django.db import connection
@@ -12,7 +14,8 @@ class ApprovalFlowStatus(APIView):
             request = request if isinstance(request,dict) else json.loads(request.body)
             return_obj = {}
             if  'flowName' in request and request['flowName']:
-                print(request['flowName'])
+
+
                 with connection.cursor() as cursor:
                     cursor.execute("BEGIN;")
                     # Call the stored procedure
@@ -40,5 +43,7 @@ class ApprovalFlowStatus(APIView):
                         "status":500,
                         "message":"Failed to retrieved data"
                     }
-        return JsonResponse(return_obj)
+
+        return Response(return_obj)
+
    

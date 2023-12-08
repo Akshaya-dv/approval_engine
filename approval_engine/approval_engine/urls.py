@@ -19,13 +19,22 @@ from django.urls import include, path
 from .flow_hirarchy import FlowName,Hirarchy
 from .approval_flow_status import ApprovalFlowStatus
 
+from .applier import Applier
+from .approver import Approver
+
+
 
 urlpatterns = [
+    # path('applicant',Applier.as_view()),
+    # path('approver',Approver.as_view()),
+    
+    path('flow',FlowName.as_view()),
+    path('flow_hirarchy',Hirarchy.as_view()) ,
+    path('approval_flow_status',ApprovalFlowStatus.as_view()),
     path('sep/',include('e_sep.urls')),
     path('leave/',include('e_leave.urls')),
     path('gems/',include('gems.urls')),
-    path('flow',FlowName.as_view()),
-    path('flow_hirarchy',Hirarchy.as_view()) ,
-    path('approval_flow_status',ApprovalFlowStatus.as_view())
+
+
  
 ]

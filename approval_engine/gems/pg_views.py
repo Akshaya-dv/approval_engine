@@ -39,7 +39,7 @@ class ProjectGeneration(APIView):
             return_object={}
             if request1.get('empId') and request1.get('flowName'):
                 project_data=list(GemsProjectGeneration.objects.filter(created_by=request1.get('empId')).values())
-                project_status = Applier.get(request)
+                project_status = Applier.get(request)['result']
                 project_data_dict={}
                 for approvalEngUniqueID_id_data in project_data:
                     project_data_dict[approvalEngUniqueID_id_data['approvalEngUniqueID_id']]=approvalEngUniqueID_id_data
@@ -73,8 +73,8 @@ class ProjectApprover(APIView):
             request1= request if isinstance(request,dict) else json.loads(request.body)
             return_object={}
             if request1.get('pgtitle') and request1.get('approvalEngUniqueID_id') and request1.get('pgId') and request1.get('pgdescription') and request1.get('skills'):
-                GemsProjectGeneration.objects.filter(pgId=request1.get('pgId')).update(pgTitle=request1.get('pgtitle'),pgDescription=request1.get('pgdescription'),skils=request1.get('skills'),created_by=request1.get('empId'))
                 return_object=Approver.put(request)
+                GemsProjectGeneration.objects.filter(pgId=request1.get('pgId')).update(pgTitle=request1.get('pgtitle'),pgDescription=request1.get('pgdescription'),skils=request1.get('skills'),created_by=request1.get('empId'))
                 return return_object
             else:
                 return_object={

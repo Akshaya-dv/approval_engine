@@ -49,7 +49,7 @@ class ApplicantRequest(APIView):
             body=request if isinstance(request,dict) else json.loads(request.body)
             return_object={}
             if body.get('empId') and body.get('flowName'):
-                approvaldata=Applier.get(request)
+                approvaldata=Applier.get(request)['result']
                 
                 gemsApplicationData=get_gemsApplication(body.get('empId'))
                 data_dict={}
