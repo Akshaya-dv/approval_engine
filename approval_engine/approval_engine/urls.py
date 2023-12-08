@@ -18,10 +18,8 @@ from django.contrib import admin
 from django.urls import include, path
 from .flow_hirarchy import FlowName,Hirarchy
 from .approval_flow_status import ApprovalFlowStatus
-
 from .applier import Applier
 from .approver import Approver
-
 
 
 urlpatterns = [
@@ -34,7 +32,6 @@ urlpatterns = [
     path('sep/',include('e_sep.urls')),
     path('leave/',include('e_leave.urls')),
     path('gems/',include('gems.urls')),
-
 
  
 ]

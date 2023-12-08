@@ -1,8 +1,6 @@
 import json
 from django.db import connection
-
 from rest_framework.response import Response
-
 from .common_function import formating_response
 from .constants import *
 from django.db import connection
@@ -14,8 +12,6 @@ class ApprovalFlowStatus(APIView):
             request = request if isinstance(request,dict) else json.loads(request.body)
             return_obj = {}
             if  'flowName' in request and request['flowName']:
-
-
                 with connection.cursor() as cursor:
                     cursor.execute("BEGIN;")
                     # Call the stored procedure
