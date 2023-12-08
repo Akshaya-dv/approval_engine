@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import ProjectGeneration,ProjectApprover
+from .pg_views import ProjectGeneration,ProjectApprover
 from .applicant_views import ApplicantRequest,Application_approver
 
 

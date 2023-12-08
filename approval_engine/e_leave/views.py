@@ -14,10 +14,9 @@ from .models import EmpLeave
 class ApplyLeaves(APIView):
     def post(self,request):
             try:
-                
                 data = request if isinstance(request,dict) else json.loads(request.body)
                 return_object={}
-                if not all(key in data for key in POST_PARAMETER_CHECK):
+                if not all(key in data for key in POST_PARAMETER_CHECK) or not 'actionDatetime' in data or not data.get('actionDatetime'):
                     return_object={
                     "status":400,
                     "message":"invalid request body"
@@ -30,25 +29,27 @@ class ApplyLeaves(APIView):
                 ActionDatetime =data.get('actionDatetime')
                 RequestRaisedDatetime = data.get('requestRaisedDatetime')
                 FlowName = data.get('flowName')
-                ActionDatetime =data.get('actionDatetime')
-
-                approvalEngUniqueId=Applier.post(request)['result']
+                approvaldata=Applier.post(request)
+                if 'result' not in approvaldata.keys():
+                    return_object=approvaldata
+                else:
+                    approvalEngUniqueId=approvaldata['result']
+                    insert_empLeave(EmpId,'[{}]',RequestRaisedDatetime,ActionDatetime,approvalEngUniqueId)
+                    return_object={
+                      "status":200,
+                      "message": 'Leave submitted successfully',
+                      
+                      }
+  
                 
-                if FlowName=='leave':
-                  insert_empLeave(EmpId,'[{}]',RequestRaisedDatetime,ActionDatetime,approvalEngUniqueId)
-                  return_object={
-                    "status":200,
-                    "message": 'Leave submitted successfully',
-                    
-                    }
-                  return JsonResponse(return_object)
+
             except json.JSONDecodeError as error:
                 print("-----------leave-post issue is ",str(error))
                 return_object={
                     "status":500,
                     'message': 'Issue is '+str(error)
                 }
-                return JsonResponse(return_object)
+            return JsonResponse(return_object)
                
     def delete(self,request):
         try:
@@ -62,24 +63,32 @@ class ApplyLeaves(APIView):
                     }
         return JsonResponse(return_object)
     
-
     def get(self, request):
         try:
             data = request if isinstance(request,dict) else json.loads(request.body)
             return_obj={}
-            EmpId=data.get('empId')
-            approvaldata=Applier.get(request)
             
-            leaveData=get_empLeave(EmpId)
-            return_obj={
-                "status":200,
-                "message":"Data retrieved successfully",
-                "result":{'LeaveData':leaveData,"ApprovalData":approvaldata}
-            }
-            
+            if 'empId' in data and data['empId'] and 'flowName' in data and data['flowName']:
+                EmpId=data.get('empId')
+                approvaldata=Applier.get(request)
+                if 'result' not in approvaldata.keys():
+                    return_obj=approvaldata
+                else:
+                    EmpId=data.get('empId')
+                    leaveData=get_empLeave(EmpId)
+                    return_obj={
+                        "status":200,
+                        "message":"Data retrieved successfully", 
+                        "result":{'LeaveData':leaveData,"ApprovalData":approvaldata['result']}
+                    }
+            else:
+                return_obj={
+                    "status":400,
+                    "message":"Invalid request boby",
+                    } 
         except json.JSONDecodeError as error:
             return_obj={
-                "status":200,
+                "status":500,
                 "message":"Internal error "+str(error),
             }
             

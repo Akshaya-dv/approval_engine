@@ -5,9 +5,8 @@ from .constants import defaultkey,columns
 def formating_response(approvaldata):
     formatedApprovalData=[]
 
-    for index,data in enumerate(approvaldata):
-        approvaldata1 = [{columns[i]:json.loads(value) if isinstance(value,str) else value for i,value in enumerate(approvaldata)}] 
-        
+    for data in approvaldata:
+       
         objFormatedApprovalData={}
         objFormatedApprovalData['approvalEngUniqueID']=data[0]
         status=json.loads(data[1])
