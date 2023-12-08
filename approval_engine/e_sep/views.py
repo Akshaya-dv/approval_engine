@@ -14,18 +14,31 @@ class Empsep1(APIView):
             try:
                 data = request if isinstance(request,dict) else json.loads(request.body)
                 return_object = {}
-                EmpId = data.get('empId')
-                if not all(key in data for key in POST_PARAMETER_CHECK):
+                EsepRequiredParameters=['positionCode',
+                'requestRaisedBy' ,
+                'actualRequestDatetime',
+                'lwdPerPolicy',
+                'lwdRequested',
+                'npDays',
+                'npShortfallDays',
+                'recoveryAmount',
+                'shortfallDays',
+                'tataGrpJoiningDate',
+                'tmlGrpJoiningDate',
+                'IsPosted',
+                'attachment']
+                if not all(key in data for key in POST_PARAMETER_CHECK) or not all(key in data for key in EsepRequiredParameters) :
                     return_object={
                     "status":400,
                     "message":"invalid request body"
                     }    
                     return JsonResponse(return_object)
         
-
+                EmpId = data.get('empId')
                 approvalId=0
-
+               
                 RequestRaisedDatetime = data.get('requestRaisedDatetime')
+                
                 PositionCode=data.get('positionCode')
                 RequestRaisedBy=data.get('requestRaisedBy')
                 ActualRequestDatetime=data.get('actualRequestDatetime')
@@ -63,7 +76,7 @@ class Empsep1(APIView):
                 if data.get('empId') and data.get('flowName'):
                     EmpId=data.get('empId')
                     
-                    approvaldata=Applier.get(request)
+                    approvaldata=Applier.get(request)['result']
                     
                     eSepData=get_empSep(EmpId)
                     
@@ -118,4 +131,8 @@ class sep_approver(APIView):
         except (Exception) as error:
             print("-------->approver-get",str(error))
             return JsonResponse(return_obj)
+            
+
+
+     
             
