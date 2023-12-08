@@ -12,7 +12,6 @@ class ApprovalFlowStatus(APIView):
             request = request if isinstance(request,dict) else json.loads(request.body)
             return_obj = {}
             if  'flowName' in request and request['flowName']:
-                
                 with connection.cursor() as cursor:
                     cursor.execute("BEGIN;")
                     # Call the stored procedure
@@ -40,5 +39,7 @@ class ApprovalFlowStatus(APIView):
                         "status":500,
                         "message":"Failed to retrieved data"
                     }
+
         return Response(return_obj)
+
    

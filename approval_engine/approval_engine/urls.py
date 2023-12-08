@@ -32,5 +32,6 @@ urlpatterns = [
     path('sep/',include('e_sep.urls')),
     path('leave/',include('e_leave.urls')),
     path('gems/',include('gems.urls')),
+
  
 ]
