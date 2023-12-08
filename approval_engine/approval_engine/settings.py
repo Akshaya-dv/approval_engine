@@ -78,14 +78,25 @@ WSGI_APPLICATION = 'approval_engine.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+
+# please don't change the variable name
+
+DB_NAME = 'Approval'
+DB_USER = 'postgres'
+DB_PASSWORD = '1234'
+DB_HOST = 'host.docker.internal'
+DB_PORT = '5432'
+
 DATABASES = {
     'default': {
        'ENGINE': 'django.db.backends.postgresql',  
-        'NAME': 'Approval Engine',  
-        'USER':'postgres',  
-        'PASSWORD':'1234',  
-        'HOST':'localhost',  
-        'PORT':'5433'  
+
+        'NAME': DB_NAME,  
+        'USER':DB_USER,  
+        'PASSWORD':DB_PASSWORD,  
+        'HOST':DB_HOST,  
+        'PORT':DB_PORT  
+
     }
 }
 
