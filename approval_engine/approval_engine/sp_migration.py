@@ -51,14 +51,15 @@ $BODY$;
 		$BODY$;"""
 
 		get_hirarchy="""CREATE OR REPLACE PROCEDURE public.get_hirarchy(
-			empid integer,
-			flowname character varying,
-			INOUT _result_cursor refcursor DEFAULT 'hirarchy'::refcursor)
-		LANGUAGE 'plpgsql'
-		AS $BODY$
+	empid integer,
+	flowname character varying,
+	INOUT _result_cursor refcursor DEFAULT 'hirarchy'::refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
 		declare
 		approvalflowid int;
-		empHirarchy integer;
+		empHirarchy int;
+		hirachy int;
 
 		BEGIN
 		EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
@@ -68,11 +69,23 @@ $BODY$;
 				into empHirarchy using approvalflowid,empId;
 
 			IF empHirarchy IS NOT NULL  THEN
+						EXECUTE	'select "hirarchy"
+				from public."ApprovalFlowHirarchy"
+				where "approvalFlowId_id"=$1 and "hirarchy">$2
+				order by "hirarchy";' into hirachy using approvalflowid,empHirarchy;
+			if hirachy IS NOT NULL  THEN
 			open _result_cursor for execute
 				'select "empId","hirarchy"
 				from public."ApprovalFlowHirarchy"
 				where "approvalFlowId_id"=$1 and "hirarchy">$2
 				order by "hirarchy";' using approvalflowid,empHirarchy;
+			else
+			open _result_cursor for execute
+				'select "empId","hirarchy"
+				from public."ApprovalFlowHirarchy"
+				where "approvalFlowId_id"=$1 and "hirarchy"=$2
+				order by "hirarchy";' using approvalflowid,empHirarchy;
+			END IF;
 				
 			ELSE
 			open _result_cursor for execute
@@ -82,7 +95,8 @@ $BODY$;
 				order by "hirarchy";' using approvalflowid;
 			END IF;
 		END;
-		$BODY$;"""
+		
+$BODY$;"""
 
 		insert_approval="""CREATE OR REPLACE PROCEDURE public.insert_approval(
 			statusarr jsonb,
