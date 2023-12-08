@@ -2,6 +2,7 @@ version: '3.8'
 services:
     approval-backend:
                     build: .
-                    command: sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+
                     ports:
-                        ['8000:8004']
+                        - '8000:8004'
+
