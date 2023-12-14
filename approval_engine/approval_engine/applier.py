@@ -13,6 +13,7 @@ class Applier:
         try:
             return_object={}
             data = json.loads(request.body.decode('utf-8'))
+            data['empId']=int(data['empId'])
             if not all(key in data for key in POST_PARAMETER_CHECK) or not isinstance(data['empId'],int) :
                     return_object={
                     "status":400,
@@ -64,7 +65,7 @@ class Applier:
                                   "status":400,
                                   "message":f"The keys in extrakeys request body sholud json object key format"
                                   }  
-        
+            
             statusStrObj=str(columnObjMapping['status'])
             StatusArr=[json.loads(statusStrObj.replace("'", "\""))]
             approvalReasonStrObj=str(columnObjMapping['approvalReason'])
@@ -80,18 +81,46 @@ class Applier:
             commentStrObj=str(columnObjMapping['comment'])
             CommentsArr=[json.loads(commentStrObj.replace("'", "\""))]
 #             # getting approval flow id from approval flow
+
             with connection.cursor() as cursor:
                 try:
                     cursor.execute("BEGIN;")
+                    cursor.execute(' CALL get_flow(%s); ',[flowName])
+             # Fetch all from the result cursor
+                    cursor.execute('FETCH ALL FROM "flow";')
+                    flowdata = cursor.fetchall()
+                   
+                    cursor.execute("COMMIT;")
                     # Call the stored procedure
-                    cursor.execute(' CALL public.get_hirarchy(%s,%s); ',[empId,flowName])
+                    # cursor.execute(' CALL public.get_hirarchy(%s,%s); ',[empId,flowName])
+                    #get_flow data approval_type, no. of approval
+                    NO_OF_APPROVALS=flowdata[0][2]
+           
+                    APPROVAL_TYPE=flowdata[0][3] 
+                    # Call the stored procedure based on approval_type
+                    cursor.execute("BEGIN;")
+                    if APPROVAL_TYPE=="static":
+                        cursor.execute(' CALL public.get_static_hirarchy(%s,%s); ',[empId,flowdata[0][0]])
+                   
+                    elif APPROVAL_TYPE=="dynamic":
+                        cursor.execute(' CALL public.get_dynamic_hirarchy(%s); ',[str(empId)])
+                    else:
+                        return_object={
+                            "status":200,
+                            "message": "None approval type is matching"
+                        }
+                        return return_object
                     # Fetch all from the result cursor
                     cursor.execute('FETCH ALL FROM "hirarchy";')
                     hirarchyData = cursor.fetchall()
+             
+                    if NO_OF_APPROVALS:
+                        hirarchyData1=[[int(reporting[1]),i+1] for i,reporting in enumerate(hirarchyData) if i<NO_OF_APPROVALS]
+                    
                     # Commit the transaction
                     cursor.execute("COMMIT;")
 #             # getting the approval hirarchy form hirarchy table
-                    for i in hirarchyData:
+                    for i in hirarchyData1:
                         for columnkey in columnObjMapping.keys():
                             (columnObjMapping[columnkey])['actionby']=i[0]
                             (columnObjMapping[columnkey])['level']=i[1] 
@@ -207,6 +236,7 @@ class Applier:
 #         try:
 #             return_object={}
 #             data = json.loads(request.body.decode('utf-8'))
+#             data['empId']=int(data['empId'])
 #             if not all(key in data for key in POST_PARAMETER_CHECK) or not isinstance(data['empId'],int) :
 #                     return_object={
 #                     "status":400,
@@ -277,15 +307,42 @@ class Applier:
 #             with connection.cursor() as cursor:
 #                 try:
 #                     cursor.execute("BEGIN;")
+#                     cursor.execute(' CALL get_flow(%s); ',[flowName])
+             # Fetch all from the result cursor
+#                     cursor.execute('FETCH ALL FROM "flow";')
+#                     flowdata = cursor.fetchall()
+                
+#                     cursor.execute("COMMIT;")
 #                     # Call the stored procedure
-#                     cursor.execute(' CALL public.get_hirarchy(%s,%s); ',[empId,flowName])
+#                     # cursor.execute(' CALL public.get_hirarchy(%s,%s); ',[empId,flowName])
+#                     #get_flow data approval_type, no. of approval
+#                     NO_OF_APPROVALS=flowdata[0][2]
+        
+#                     APPROVAL_TYPE=flowdata[0][3] 
+#                     # Call the stored procedure based on approval_type
+#                     cursor.execute("BEGIN;")
+#                     if APPROVAL_TYPE=="static":
+#                         cursor.execute(' CALL public.get_static_hirarchy(%s,%s); ',[empId,flowdata[0][0]])
+                
+#                     elif APPROVAL_TYPE=="dynamic":
+#                         cursor.execute(' CALL public.get_dynamic_hirarchy(%s); ',[str(empId)])
+#                     else:
+#                         return_object={
+#                             "status":200,
+#                             "message": "None approval type is matching"
+#                         }
+#                         return return_object
 #                     # Fetch all from the result cursor
 #                     cursor.execute('FETCH ALL FROM "hirarchy";')
 #                     hirarchyData = cursor.fetchall()
+            
+#                     if NO_OF_APPROVALS:
+#                         hirarchyData1=[[int(reporting[1]),i+1] for i,reporting in enumerate(hirarchyData) if i<NO_OF_APPROVALS]
+                    
 #                     # Commit the transaction
 #                     cursor.execute("COMMIT;")
 # #             # getting the approval hirarchy form hirarchy table
-#                     for i in hirarchyData:
+#                     for i in hirarchyData1:
 #                         for columnkey in columnObjMapping.keys():
 #                             (columnObjMapping[columnkey])['actionby']=i[0]
 #                             (columnObjMapping[columnkey])['level']=i[1]

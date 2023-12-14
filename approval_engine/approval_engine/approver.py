@@ -61,9 +61,11 @@ class Approver:
             cursor.execute('FETCH ALL FROM "rs_approvaldata";')
             approvaldata_status = cursor.fetchall()
             # Commit the transaction
+           
             cursor.execute("COMMIT;")
             
             approvaldata = [{columns[index]:json.loads(value) if isinstance(value,str) else value for index,value in enumerate(approvaldata_status[0])}]      
+
             # approvaldata = list(ApprovalEngMasterData.objects.filter(approvalEngUniqueID=request['approvalEngUniqueID_id']).values())
             if 'status' in request and request['status']:#request['status'] in ('Approved','Rejected'): 
                 status,approvalReason,rejectionReason,description,justification,remarks,comments=[],[],[],[],[],[],[]
@@ -112,6 +114,7 @@ class Approver:
                 'message': "Failed to approve data",
                 
             }
+
         return Response(return_object)
     
  

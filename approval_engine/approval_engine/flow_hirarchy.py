@@ -26,6 +26,8 @@ class FlowName(APIView):
                     flow={}
                     flow['approvalFlowId']=i[0]
                     flow['approvalFlowName']=i[1]
+                    flow['noOfApproval']=i[2]
+                    flow['approvalFlowType']=i[3]
                     formatedflowdata.append(flow)
                 return_object={
                     "status":200,
@@ -51,14 +53,27 @@ class FlowName(APIView):
         try:
             request = request if isinstance(request,dict) else json.loads(request.body)
             return_object={}
-            if request.get('flowName'):
+                     
+            if request.get('flowName') and 'noOfApproval' in request and  request['noOfApproval']>=1 and  isinstance(request['noOfApproval'],int)  and request.get('approvalFlowType') :
+                if request.get('approvalFlowType','na').lower()=='static':
+                    approvalFlowType='static'
+                elif request.get('approvalFlowType','na').lower()=='dynamic':
+                    approvalFlowType='dynamic'
+                else :
+                    return_object={
+                    "status":400,
+                    "message":'Invalid request body, "approvalFlowType" must be either "static" or "dynamic" '
+                }
+                    return JsonResponse(return_object)
+
                 with connection.cursor() as cursor:
                     try:
                         results=''
-                        cursor.execute('CALL public.insert_flow(%s,%s)', [request.get('flowName'),results])
+                        print(22222,"----",results,request.get('flowName'),request.get('noOfApproval'),request.get('approvalFlowType'))
+                        cursor.execute('CALL public.insert_flow(%s,%s,%s,%s)', [request.get('flowName'),request.get('noOfApproval'),approvalFlowType,results])
                         results = cursor.fetchall()
-                     
-                    except:
+                        print("____",results)
+                    except: 
                         return_object={
                             "status":500,
                             "message":"Issue is "+str(error)
