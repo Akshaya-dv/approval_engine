@@ -55,9 +55,9 @@ $BODY$;
 		END;
 		$BODY$;"""
 	
-    get_hirarchy="""CREATE OR REPLACE PROCEDURE public.get_hirarchy(
+    get_static_hirarchy="""CREATE OR REPLACE PROCEDURE public.get_static_hirarchy(
 	IN empid integer,
-	IN approvalflowid int,
+	IN approvalflowid integer,
 	INOUT _result_cursor refcursor DEFAULT 'hirarchy'::refcursor)
 LANGUAGE 'plpgsql'
 AS $BODY$
@@ -223,6 +223,26 @@ $BODY$;
 		$BODY$;
 		"""
 	
+    get_dynamic_hirarchy="""CREATE OR REPLACE PROCEDURE public.get_dynamic_hirarchy(
+	IN _perno text,
+	INOUT _result_one refcursor DEFAULT 'hirarchy'::refcursor)
+LANGUAGE 'plpgsql'
+AS $BODY$
+    begin
+            open _result_one for
+                WITH RECURSIVE cte_query        
+                AS                      
+                (
+                select x."Perno",x."Reporting" from "edp_employee_details" x where x."Perno"=_Perno              
+                UNION ALL  
+                select x1."Perno",x1."Reporting" from "edp_employee_details" x1   
+                INNER JOIN cte_query c ON c."Reporting" = x1."Perno"
+                )
+            Select * from cte_query;
+ 
+    END;
+$BODY$;"""
+
     get_flow_hirarchy="""CREATE OR REPLACE PROCEDURE public.get_flow_hirarchy(
 			flowname character varying,
 			INOUT _result_cursor refcursor DEFAULT 'flow_hirarchy'::refcursor)
@@ -389,7 +409,8 @@ $BODY$;"""
 	
     spList=[get_approvaldata,
 				get_delete_approvalstatus,
-				get_hirarchy,
+                get_static_hirarchy,
+                get_dynamic_hirarchy,
 				insert_approval,
 				get_approvalstatus,
 				get_ApprovalMaster_AppEngUniqId1,
