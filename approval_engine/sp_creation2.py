@@ -272,7 +272,7 @@ $BODY$;"""
     insert_flow="""CREATE OR REPLACE PROCEDURE public.insert_flow(
 			flowname character varying,
 	noOfApproval int,
-	approvalFlowType boolean,
+	approvalFlowType character varying,
 			INOUT result text)
 		LANGUAGE 'plpgsql'
 		AS $BODY$
