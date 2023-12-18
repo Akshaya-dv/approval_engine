@@ -20,10 +20,11 @@ def formating_response(approvaldata):
         objFormatedApprovalData['latestUpdateDate'] =data[8]
         objFormatedApprovalData['flow']=data[9]
         objFormatedApprovalData['isDeleted']=data[10]
-        
+        objFormatedApprovalData['levels']=[]
         for i in range(len(status)):
             
-            objFormatedApprovalData[status[i]['actionby']]={
+            objListData={
+                "actionby":status[i]['actionby'],
                 "level":status[i]['level'],
                 "status": status[i]['status'],
                 "statusUpdatedDate":status[i]['date'],
@@ -42,25 +43,25 @@ def formating_response(approvaldata):
             }
             for key in status[i].keys():
                 if not(key in defaultkey):
-                    (objFormatedApprovalData[status[i]['actionby']])[key]=status[i][key]
+                    objListData[key]=status[i][key]
             for key in approvalReason[i].keys():
                 if not(key in defaultkey):
-                    (objFormatedApprovalData[status[i]['actionby']])[key]=approvalReason[i][key]
+                    objListData[key]=approvalReason[i][key]
             for key in rejectionReason[i].keys():
                 if not(key in defaultkey):
-                    (objFormatedApprovalData[status[i]['actionby']])[key]=rejectionReason[i][key]
+                    objListData[key]=rejectionReason[i][key]
             for key in description[i].keys():
                 if not(key in defaultkey):
-                    (objFormatedApprovalData[status[i]['actionby']])[key]=description[i][key]
+                    objListData[key]=description[i][key]
             for key in justification[i].keys():
                 if not(key in defaultkey):
-                    (objFormatedApprovalData[status[i]['actionby']])[key]=justification[i][key]
+                    objListData[key]=justification[i][key]
             for key in remarks[i].keys():
                 if not(key in defaultkey):
-                    (objFormatedApprovalData[status[i]['actionby']])[key]=remarks[i][key]
+                    objListData[key]=remarks[i][key]
             for key in comments[i].keys():
                 if not(key in defaultkey):
-                    (objFormatedApprovalData[status[i]['actionby']])[key]=comments[i][key]
-            
+                    objListData[key]=comments[i][key]
+            objFormatedApprovalData['levels'].append(objListData)
         formatedApprovalData.append(objFormatedApprovalData)
     return formatedApprovalData

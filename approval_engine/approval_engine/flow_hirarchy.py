@@ -37,8 +37,7 @@ class FlowName(APIView):
             else:
                  return_object={
                     "status":200,
-                    "message":"flowname retrieved successfully",
-                    "result":"Please check the flowname this flowname is not present in database"
+                    "message":"Please check the flowname this flowname is not present in database"
                 }
         
         except (Exception) as error:
@@ -68,11 +67,9 @@ class FlowName(APIView):
 
                 with connection.cursor() as cursor:
                     try:
-                        results=''
-                        print(22222,"----",results,request.get('flowName'),request.get('noOfApproval'),request.get('approvalFlowType'))
+                        results=''    
                         cursor.execute('CALL public.insert_flow(%s,%s,%s,%s)', [request.get('flowName'),request.get('noOfApproval'),approvalFlowType,results])
-                        results = cursor.fetchall()
-                        print("____",results)
+                        results = cursor.fetchall() 
                     except: 
                         return_object={
                             "status":500,
@@ -89,6 +86,58 @@ class FlowName(APIView):
                     return_object={
                     "status":200,
                     "message":"flowname inserted successfully"
+                }         
+            else:
+                return_object={
+                    "status":400,
+                    "message":"Invalid request body"
+                }    
+        except (Exception) as error:
+            print("Flow Name insertion issue "+str(error))
+            return_object={
+                "status":500,
+                "message":"Issue is "+str(error)
+            }
+        return JsonResponse(return_object)
+
+    def put(self,request):
+        try:
+            request = request if isinstance(request,dict) else json.loads(request.body)
+            return_object={}
+                     
+            if request.get('flowName') and 'noOfApproval' in request and  request['noOfApproval']>=1 and  isinstance(request['noOfApproval'],int)  and request.get('approvalFlowType') :
+                if request.get('approvalFlowType','na').lower()=='static':
+                    approvalFlowType='static'
+                elif request.get('approvalFlowType','na').lower()=='dynamic':
+                    approvalFlowType='dynamic'
+                else :
+                    return_object={
+                    "status":400,
+                    "message":'Invalid request body, "approvalFlowType" must be either "static" or "dynamic" '
+                }
+                    return JsonResponse(return_object)
+
+                with connection.cursor() as cursor:
+                    try:
+                        results=''    
+                        cursor.execute('CALL public.update_flow(%s,%s,%s,%s)', [request.get('flowName'),request.get('noOfApproval'),approvalFlowType,results])
+                        results = cursor.fetchall() 
+                    except: 
+                        return_object={
+                            "status":500,
+                            "message":"Issue is "+str(error)
+                        }
+                    finally:
+                          cursor.close()
+                if results[0][0]=='doesNotExist':
+                    return_object={
+                    "status":200,
+                    "message":"flowname does not exist to update"
+                }    
+                elif results[0][0]=='updated':
+                    return_object={
+                    "status":200,
+                    "message":"flowname updated successfully"
                 }         
             else:
                 return_object={
@@ -124,8 +173,7 @@ class Hirarchy(APIView):
                     if flowdata[0][0]=='flownameNotPresent':
                         return_object={
                         "status":200,
-                        "message":"flowname retrieved successfully",
-                        "result":'Please check the flowname this flowname is not present in database'
+                        "message":"Please check the flowname this flowname is not present in database"
                     }
                     else:
                        
@@ -145,8 +193,7 @@ class Hirarchy(APIView):
                 else:
                     return_object={
                         "status":200,
-                        "message":"flowname retrieved successfully",
-                        "result":"The hirarchy is not present for the entered flowname "
+                        "message":"The hirarchy is not present for the entered flowname"
                     }
                   
             else:
@@ -205,32 +252,45 @@ class Hirarchy(APIView):
             request = request if isinstance(request,dict) else json.loads(request.body)
             return_object={}
             if request.get('hirarchy') and len(request.get('hirarchy'))>0 and request.get('flowName'):
-                    insert_list=[]
-                    for hirarchy in request.get('hirarchy'):
-                        if hirarchy.get('empId') and hirarchy.get('hirarchy'):
-                            with connection.cursor() as cursor:
-                                try:
+                with connection.cursor() as cursor:
+                
+                    cursor.execute("BEGIN;")
+                    cursor.execute(' CALL get_flow(%s); ',[request.get('flowName')])
+             # Fetch all from the result cursor
+                    cursor.execute('FETCH ALL FROM "flow";')
+                    flowdata = cursor.fetchall()
+                    
+                    cursor.execute("COMMIT;")
+                    if flowdata and flowdata[0][3]=='static':  
+                        ApprovalFlowid=flowdata[0][0]
+                        NO_OF_APPROVALS=flowdata[0][2]
+                        insert_list=[]
+                        for hirarchy in request.get('hirarchy'):
+                            if hirarchy.get('empId') and hirarchy.get('hirarchy') and NO_OF_APPROVALS>=hirarchy.get('hirarchy'):
                                     results=''
-                                    cursor.execute('CALL public.insert_flow_hirarchy(%s,%s,%s,%s)', [request.get('flowName'),hirarchy.get('empId'),hirarchy.get('hirarchy'),results])
+                                    cursor.execute('CALL public.insert_flow_hirarchy(%s,%s,%s,%s)', [ApprovalFlowid,hirarchy.get('empId'),hirarchy.get('hirarchy'),results])
                                     results = cursor.fetchall()
-                                
+                            else:
+                                return_object= {
+                                    "status":400,
+                                    "message":"Invalid request body or approval hirarchy must be less than or equalto no of approval specified in the flow "
+                                }
+                                return JsonResponse(return_object)
                             
-                                finally:
-                                      cursor.close()
-                    if results[0][0]=='inserted':
+                        if results[0][0]=='inserted':
+                            return_object={
+                                "status":200,
+                                "message":"Hirarchy inserted successfully"
+                            }
+                        elif results[0][0]=='empIdAlreadyExistsInThisHirarchy':
+                            return_object={
+                                "status":200,
+                                "message":"Employeeid is already present in the hirarchy  "
+                            }
+                    else :
                         return_object={
-                            "status":200,
-                            "message":"Hirarchy inserted successfully"
-                        }
-                    elif results[0][0]=='empIdAlreadyExistsInThisHirarchy':
-                        return_object={
-                            "status":200,
-                            "message":"Employeeid is already present in the hirarchy  "
-                        }
-                    elif results[0][0]=='flowNameDoesnotExists':
-                        return_object={
-                            "status":200,
-                            "message":"Please check the flowname this flowname is not present in database "
+                            "status":400,
+                            "message":"Please check the flowname this flowname is not present in database or flowname is dynamic "
                         }
                
             else:

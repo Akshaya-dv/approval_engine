@@ -297,41 +297,62 @@ $BODY$;"""
 		"""
 	
     insert_flow_hirarchy="""CREATE OR REPLACE PROCEDURE public.insert_flow_hirarchy(
-			flowname character varying,
-			empid integer,
-			hirarchy integer,
-			INOUT result text)
-		LANGUAGE 'plpgsql'
-		AS $BODY$
+	IN flowid integer,
+	IN empid integer,
+	IN hirarchy integer,
+	INOUT result text)
+LANGUAGE 'plpgsql'
+AS $BODY$
 		declare
-		approvalflowid int;
 		empHirarchy int;
-
 		BEGIN
-		EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
-		INTO approvalflowid USING flowname;
-
-			IF approvalflowid IS NOT NULL  THEN
+	
 			EXECUTE  'SELECT "hirarchy" FROM public."ApprovalFlowHirarchy"
 				WHERE "approvalFlowId_id" =$1 AND "empId" = $2'
-				into empHirarchy using approvalflowid,empId;
+				into empHirarchy using flowid,empId;
 
 			IF empHirarchy IS NOT NULL  THEN
 			result:='empIdAlreadyExistsInThisHirarchy';
 			ELSE
 			INSERT INTO public."ApprovalFlowHirarchy"(
 				"empId", hirarchy, "approvalFlowId_id")
-				VALUES ( empId, hirarchy, approvalflowid);
+				VALUES ( empId, hirarchy, flowid);
 			result:='inserted';
-			END IF;
-			
-			ELSE
-				result:='flowNameDoesnotExists';
 			END IF;
 
 		END;
-		$BODY$;"""
+		
+$BODY$;"""
 	
+    update_flow="""CREATE OR REPLACE PROCEDURE public.update_flow(
+	IN flowname character varying,
+	IN noofapproval integer,
+	IN approvalflowtype character varying,
+	INOUT result text)
+LANGUAGE 'plpgsql'
+AS $BODY$
+		declare
+		approvalflowid int;
+
+		BEGIN
+		EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
+		INTO approvalflowid USING flowname;
+
+			IF approvalflowid IS NOT NULL  THEN
+			UPDATE public."ApprovalFlow"
+	SET  "noOfApproval"=noofapproval, "approvalFlowType"=approvalflowtype
+	WHERE  "approvalFlowName"=flowname;
+				result:='updated';
+				
+			ELSE
+		result:='doesNotExist';
+
+			END IF;
+
+		END;
+		
+$BODY$;"""
+
     update_flow_hirarchy="""CREATE OR REPLACE PROCEDURE public.update_flow_hirarchy(
 			flowname character varying,
 			new_empid integer,
@@ -370,31 +391,23 @@ $BODY$;"""
 		$BODY$;"""
 	
     get_approval_flow_status="""CREATE OR REPLACE PROCEDURE public.get_approval_flow_status(
-	_flowname text,
-	_status text,
+	IN _flowname text,
+	IN _status text,
 	INOUT _result_one refcursor DEFAULT 'rs_approvaldata'::refcursor)
 LANGUAGE 'plpgsql'
 AS $BODY$
 declare
 		approvalflowid int;
-		maxhirarchy int;
+
 		BEGIN
 		EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1  group by "approvalFlowId";' 
 		INTO  approvalflowid USING _flowname;
-		EXECUTE 'select max("hirarchy")
-				from public."ApprovalFlowHirarchy"
-				where "approvalFlowId_id"=$1;'
-				INTO maxhirarchy using approvalflowid;
 				
 			 IF _status is not null then
 			 open _result_one for 
 		        SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id, "isDeleted"
 				FROM public."ApprovalEngMasterData" 
-				WHERE "flow_id" =approvalflowid AND exists( SELECT 1
-														   FROM jsonb_array_elements(status) AS s
-														   WHERE
-														    s->>'level' = maxhirarchy::text 
-														   and s->>'status'=_status );
+				WHERE "flow_id" =approvalflowid AND("status"->-1->>'status') =_status;
 			
 			 ELSE
 			 open _result_one for 
@@ -419,6 +432,7 @@ $BODY$;"""
 				get_flow_hirarchy,
 				insert_flow,
 				insert_flow_hirarchy,
+                update_flow,
 				update_flow_hirarchy,
 				get_approval_flow_status]
 

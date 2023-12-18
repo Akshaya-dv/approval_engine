@@ -14,12 +14,16 @@ class ProjectGeneration(APIView):
             request1= request if isinstance(request,dict) else json.loads(request.body)
             return_object={}
             if request1.get('pgtitle') and request1.get('pgdescription') and request1.get('skills') and all(key in request1 for key in POST_PARAMETER_CHECK):
-                approvalId = Applier.post(request)['result']
-                GemsProjectGeneration(pgTitle=request1.get('pgtitle'),pgDescription=request1.get('pgdescription'),skils=request1.get('skills'),created_by=request1.get('empId'),approvalEngUniqueID_id=approvalId).save()
-                return_object = {
-                    "status":200,
-                    "message":"Project generated successfully"
-                }
+                approvaldata=Applier.post(request)
+                if 'result' not in approvaldata.keys():
+                    return_object=approvaldata
+                else:     
+                    approvalId = Applier.post(request)['result']
+                    GemsProjectGeneration(pgTitle=request1.get('pgtitle'),pgDescription=request1.get('pgdescription'),skils=request1.get('skills'),created_by=request1.get('empId'),approvalEngUniqueID_id=approvalId).save()
+                    return_object = {
+                        "status":200,
+                        "message":"Project generated successfully"
+                    }
                 
             else:
                 return_object={

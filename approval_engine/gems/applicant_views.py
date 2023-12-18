@@ -17,19 +17,22 @@ class ApplicantRequest(APIView):
             if  body.get('projectId') and body.get('attachment') and all(key in body for key in POST_PARAMETER_CHECK):
                 projectData = list(GemsProjectGeneration.objects.filter(pgId=body.get('projectId')).values('pgId'))
                 if(projectData):
-                    approvalId=Applier.post(request)['result']
-                    insert_gemsApplication(body.get('empId'),body.get('projectId'),body.get('requestRaisedDatetime'),body.get('attachment'),body.get('status'),approvalId)
-                    return_object={
-                        "status":200,
-                        "message":"Inserted successfully"
-                    }  
+                    approvaldata=Applier.post(request)
+                    if 'result' not in approvaldata.keys():
+                        return_object=approvaldata
+                    else:
+                        approvalId=Applier.post(request)['result']
+                        insert_gemsApplication(body.get('empId'),body.get('projectId'),body.get('requestRaisedDatetime'),body.get('attachment'),body.get('status'),approvalId)
+                        return_object={
+                            "status":200,
+                            "message":"Inserted successfully"
+                        }  
                 else:
                     return_object={
                         "status":400,
                         "message":"Their is no project with corresponding projectId "
                     }  
 
-                
             else:
                 return_object={
                 "status":400,
