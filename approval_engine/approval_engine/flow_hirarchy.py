@@ -114,7 +114,7 @@ class FlowName(APIView):
                     return_object={
                     "status":400,
                     "message":'Invalid request body, "approvalFlowType" must be either "static" or "dynamic" '
-                }
+                    }
                     return JsonResponse(return_object)
 
                 with connection.cursor() as cursor:
@@ -131,14 +131,16 @@ class FlowName(APIView):
                           cursor.close()
                 if results[0][0]=='doesNotExist':
                     return_object={
-                    "status":200,
+                    "status":400,
                     "message":"flowname does not exist to update"
                 }    
                 elif results[0][0]=='updated':
                     return_object={
-                    "status":200,
+                    "status":400,
                     "message":"flowname updated successfully"
-                }         
+                }    
+                
+
             else:
                 return_object={
                     "status":400,
@@ -238,6 +240,11 @@ class Hirarchy(APIView):
                         "status":200,
                         "message":"Please check the flowname this flowname is not present in database "
                     }
+                elif results[0][0]=='thisEmpIdAlreadyPresent':
+                     return_object={
+                    "status":400,
+                    "message":"The empid is already present in hirarchy"
+                    }   
             
         except (Exception) as error:
             print("Flow Name insertion issue "+str(error))
@@ -261,14 +268,26 @@ class Hirarchy(APIView):
                     flowdata = cursor.fetchall()
                     
                     cursor.execute("COMMIT;")
-                    if flowdata and flowdata[0][3]=='static':  
+                    if flowdata and flowdata[0][3]=='static' :  
                         ApprovalFlowid=flowdata[0][0]
                         NO_OF_APPROVALS=flowdata[0][2]
+                        if NO_OF_APPROVALS<len(request.get('hirarchy')):
+                            return_object= {
+                                    "status":400,
+                                    "message":"Invalid request body or approval hirarchy must be less than or equalto no of approval specified in the flow "
+                                }
+                            return JsonResponse(return_object)
                         insert_list=[]
+
                         for hirarchy in request.get('hirarchy'):
-                            if hirarchy.get('empId') and hirarchy.get('hirarchy') and NO_OF_APPROVALS>=hirarchy.get('hirarchy'):
+                            if hirarchy.get('empId') and isinstance(hirarchy.get('empId'),str)  and hirarchy.get('hirarchy'):
                                     results=''
-                                    cursor.execute('CALL public.insert_flow_hirarchy(%s,%s,%s,%s)', [ApprovalFlowid,hirarchy.get('empId'),hirarchy.get('hirarchy'),results])
+                                    cursor.execute('CALL public.insert_flow_hirarchy(%s,%s,%s,%s)', [ApprovalFlowid,int(hirarchy.get('empId')),hirarchy.get('hirarchy'),results])
+                                    results = cursor.fetchall()
+                            elif hirarchy.get('empId') and isinstance(hirarchy.get('empId'),list)  and hirarchy.get('hirarchy'):
+                                for empid in hirarchy.get('empId'):
+                                    results=''
+                                    cursor.execute('CALL public.insert_flow_hirarchy(%s,%s,%s,%s)', [ApprovalFlowid,int(empid),hirarchy.get('hirarchy'),results])
                                     results = cursor.fetchall()
                             else:
                                 return_object= {

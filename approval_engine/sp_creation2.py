@@ -1,12 +1,32 @@
 import psycopg2
-from approval_engine.settings import DB_NAME,DB_USER,DB_PASSWORD,DB_HOST,DB_PORT
+from leave_services.settings import DB_NAME,DB_USER,DB_PASSWORD,DB_HOST,DB_PORT
 connection = psycopg2.connect(
     database=DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port= DB_PORT
 )
 cursor = connection.cursor()
+tablename='edp_employee_details'
+empcolumnname='Perno'
+reportingcolumnname='Reporting'
 
 def create_sp():
     
+    creating_view="""CREATE OR REPLACE PROCEDURE public.creating_view(
+	IN tablename character varying,
+	IN empcolumnname character varying,
+	IN reportingcolumnname character varying,
+	INOUT result text)
+LANGUAGE 'plpgsql'
+AS $BODY$
+		BEGIN
+		result:= 'create view  dynamicHirarchyView as 
+select "'||empcolumnname||'" as empid,"'||reportingcolumnname||'" as reporting 
+FROM "'||Tablename||'";';
+execute result;
+		END;
+		
+$BODY$;
+	"""
+
     get_approvaldata="""CREATE OR REPLACE PROCEDURE public.get_approvaldata(
 	_empid integer,
 	_flowname text,
@@ -233,10 +253,10 @@ AS $BODY$
                 WITH RECURSIVE cte_query        
                 AS                      
                 (
-                select x."Perno",x."Reporting" from "edp_employee_details" x where x."Perno"=_Perno              
+                select x."empid",x."reporting" from "dynamichirarchyview" x where x."empid"=_Perno              
                 UNION ALL  
-                select x1."Perno",x1."Reporting" from "edp_employee_details" x1   
-                INNER JOIN cte_query c ON c."Reporting" = x1."Perno"
+                select x1."empid",x1."reporting" from "dynamichirarchyview" x1   
+                INNER JOIN cte_query c ON c."reporting" = x1."empid"
                 )
             Select * from cte_query;
  
@@ -291,39 +311,35 @@ $BODY$;"""
 				result:='inserted';
 
 			END IF;
-
 		END;
-		$BODY$;
-		"""
-	
+		$BODY$;"""
     insert_flow_hirarchy="""CREATE OR REPLACE PROCEDURE public.insert_flow_hirarchy(
-	IN flowid integer,
-	IN empid integer,
-	IN hirarchy integer,
-	INOUT result text)
-LANGUAGE 'plpgsql'
-AS $BODY$
-		declare
-		empHirarchy int;
-		BEGIN
-	
-			EXECUTE  'SELECT "hirarchy" FROM public."ApprovalFlowHirarchy"
-				WHERE "approvalFlowId_id" =$1 AND "empId" = $2'
-				into empHirarchy using flowid,empId;
-
-			IF empHirarchy IS NOT NULL  THEN
-			result:='empIdAlreadyExistsInThisHirarchy';
-			ELSE
-			INSERT INTO public."ApprovalFlowHirarchy"(
-				"empId", hirarchy, "approvalFlowId_id")
-				VALUES ( empId, hirarchy, flowid);
-			result:='inserted';
-			END IF;
-
-		END;
+		IN flowid integer,
+		IN empid integer,
+		IN hirarchy integer,
+		INOUT result text)
+		LANGUAGE 'plpgsql'
+		AS $BODY$
+				declare
+				empHirarchy int;
+				BEGIN
+			
+					EXECUTE  'SELECT "hirarchy" FROM public."ApprovalFlowHirarchy"
+						WHERE "approvalFlowId_id" =$1 AND "empId" = $2'
+						into empHirarchy using flowid,empId;
 		
-$BODY$;"""
-	
+					IF empHirarchy IS NOT NULL  THEN
+					result:='empIdAlreadyExistsInThisHirarchy';
+					ELSE
+					INSERT INTO public."ApprovalFlowHirarchy"(
+						"empId", hirarchy, "approvalFlowId_id")
+						VALUES ( empId, hirarchy, flowid);
+					result:='inserted';
+					END IF;
+
+				END;	
+	    $BODY$;"""
+
     update_flow="""CREATE OR REPLACE PROCEDURE public.update_flow(
 	IN flowname character varying,
 	IN noofapproval integer,
@@ -343,27 +359,27 @@ AS $BODY$
 	SET  "noOfApproval"=noofapproval, "approvalFlowType"=approvalflowtype
 	WHERE  "approvalFlowName"=flowname;
 				result:='updated';
-				
-			ELSE
-		result:='doesNotExist';
-
-			END IF;
-
-		END;
-		
-$BODY$;"""
+    				
+    			ELSE
+    		result:='doesNotExist';
+    
+    			END IF;
+    
+    		END;
+    		
+        $BODY$;"""
 
     update_flow_hirarchy="""CREATE OR REPLACE PROCEDURE public.update_flow_hirarchy(
-			flowname character varying,
-			new_empid integer,
-			hirarchy integer,
-			INOUT result text)
-		LANGUAGE 'plpgsql'
-		AS $BODY$
+	IN flowname character varying,
+	IN new_empid integer,
+	IN hirarchy integer,
+	INOUT result text)
+LANGUAGE 'plpgsql'
+AS $BODY$
 		declare
 		approvalflowid int;
 		empHirarchy int;
-
+		empAlreadyExist int;
 		BEGIN
 		EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1' 
 		INTO approvalflowid USING flowname;
@@ -374,11 +390,21 @@ $BODY$;"""
 				into empHirarchy using approvalflowid,hirarchy;
 
 			IF empHirarchy IS NOT NULL  THEN
+			EXECUTE  'SELECT "empId" FROM public."ApprovalFlowHirarchy"
+				WHERE "approvalFlowId_id" =$1 AND "empId" = $2'
+				into empAlreadyExist using approvalflowid,new_empid;
+			
+			if empAlreadyExist is not null then 
+			result:='thisEmpIdAlreadyPresent';
+            
+			ELSE
 			EXECUTE  'UPDATE public."ApprovalFlowHirarchy"
 			SET  "empId"=$1
 			WHERE "hirarchy"=$2 and "approvalFlowId_id"= $3;'
-				using new_empid ,hirarchy,approvalflowid;
+			using new_empid ,hirarchy,approvalflowid;
 			result:='updated';
+			END IF;
+			
 			ELSE
 			result:='recordNotPresent';
 			END IF;
@@ -388,26 +414,47 @@ $BODY$;"""
 			END IF;
 
 		END;
-		$BODY$;"""
+		
+$BODY$;"""
 	
+    delete_flow_hirarchy="""CREATE OR REPLACE PROCEDURE public.delete_flow_hirarchy(
+	IN flowid int,
+	INOUT result text)
+LANGUAGE 'plpgsql'
+AS $BODY$
+		BEGIN
+	DELETE FROM public."ApprovalFlowHirarchy"
+	WHERE "approvalFlowId_id"=flowid;
+    result:='deletesuccessfully';
+		END;
+$BODY$;"""
+
     get_approval_flow_status="""CREATE OR REPLACE PROCEDURE public.get_approval_flow_status(
-	IN _flowname text,
-	IN _status text,
+	_flowname text,
+	_status text,
 	INOUT _result_one refcursor DEFAULT 'rs_approvaldata'::refcursor)
 LANGUAGE 'plpgsql'
 AS $BODY$
 declare
 		approvalflowid int;
-
+		maxhirarchy int;
 		BEGIN
 		EXECUTE 'SELECT "approvalFlowId" FROM public."ApprovalFlow" WHERE "approvalFlowName" = $1  group by "approvalFlowId";' 
 		INTO  approvalflowid USING _flowname;
+		EXECUTE 'select max("hirarchy")
+				from public."ApprovalFlowHirarchy"
+				where "approvalFlowId_id"=$1;'
+				INTO maxhirarchy using approvalflowid;
 				
 			 IF _status is not null then
 			 open _result_one for 
 		        SELECT "approvalEngUniqueID", status, "approvalReason", "rejectionReason", description, justification, remarks, comments, "latestUpdateDate", flow_id, "isDeleted"
 				FROM public."ApprovalEngMasterData" 
-				WHERE "flow_id" =approvalflowid AND("status"->-1->>'status') =_status;
+				WHERE "flow_id" =approvalflowid AND exists( SELECT 1
+														   FROM jsonb_array_elements(status) AS s
+														   WHERE
+														    s->>'level' = maxhirarchy::text 
+														   and s->>'status'=_status );
 			
 			 ELSE
 			 open _result_one for 
@@ -420,7 +467,8 @@ declare
 		
 $BODY$;"""
 	
-    spList=[get_approvaldata,
+    spList=[creating_view,
+            get_approvaldata,
 				get_delete_approvalstatus,
                 get_static_hirarchy,
                 get_dynamic_hirarchy,
@@ -434,11 +482,13 @@ $BODY$;"""
 				insert_flow_hirarchy,
                 update_flow,
 				update_flow_hirarchy,
+                delete_flow_hirarchy,
 				get_approval_flow_status]
 
     for sp in spList:
         cursor.execute(sp)
         cursor.execute('commit;')
+    cursor.execute('call creating_view(%s,%s,%s,%s)',[tablename,empcolumnname,reportingcolumnname,''])
     cursor.close()
 
     return {"status":200,
