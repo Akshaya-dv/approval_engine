@@ -7,6 +7,8 @@ from django.db.models import JSONField
 class ApprovalFlow(models.Model):
     approvalFlowId= models.AutoField(primary_key=True)
     approvalFlowName= models.CharField(max_length=255)
+    noOfApproval=models.IntegerField(null=False)
+    approvalFlowType=models.CharField(max_length=255)
     class Meta:
         db_table="ApprovalFlow"
     

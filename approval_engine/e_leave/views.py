@@ -28,7 +28,6 @@ class ApplyLeaves(APIView):
                 FlowName = data.get('flowName')
                 ActionDatetime =data.get('actionDatetime')
                 RequestRaisedDatetime = data.get('requestRaisedDatetime')
-                FlowName = data.get('flowName')
                 approvaldata=Applier.post(request)
                 if 'result' not in approvaldata.keys():
                     return_object=approvaldata
@@ -40,8 +39,7 @@ class ApplyLeaves(APIView):
                       "message": 'Leave submitted successfully',
                       
                       }
-  
-                
+
 
             except json.JSONDecodeError as error:
                 print("-----------leave-post issue is ",str(error))
@@ -101,8 +99,8 @@ def insert_empLeave(EmpId,PendingActionFrom,RequestRaisedDatetime,ActionDatetime
 
 
 def get_empLeave(EmpId):
-        employeeleave = list(EmpLeave.objects.filter(empId=EmpId).values())
-        return employeeleave
+    employeeleave = list(EmpLeave.objects.filter(empId=EmpId).values())
+    return employeeleave
 
 
 class Leave_approver(APIView):

@@ -52,16 +52,21 @@ class Empsep1(APIView):
                 TmlGrpJoiningDate =data.get('tmlGrpJoiningDate')
                 IsPosted=data.get('IsPosted')
                 Attachment=data.get('attachment')
-
-                approvalId = Applier.post(request)['result']
                 
-                insert_ESep(EmpId,PositionCode,RequestRaisedBy,RequestRaisedDatetime,ActualRequestDatetime,LWDPerPolicy,LWDRequested,NPDays,
+                approvaldata=Applier.post(request)
+
+                if 'result' not in approvaldata.keys():
+                    return_object=approvaldata
+                else:
+                    approvalId=approvaldata['result']
+                    insert_ESep(EmpId,PositionCode,RequestRaisedBy,RequestRaisedDatetime,ActualRequestDatetime,LWDPerPolicy,LWDRequested,NPDays,
                 NPShortfallDays,'[{}]',RecoveryAmount,ShortfallDays,tataGrpJoiningDate,TmlGrpJoiningDate ,
                 IsPosted,Attachment,approvalId)
-                return_object={
-                    "status":200,
-                    "message": 'E-sep submitted successfully',
-                    }
+                    return_object={
+                       "status":200,
+                       "message": 'E-sep submitted successfully',
+                        }
+                
             except json.JSONDecodeError as error:
                 return_object={
                     "status":500,
