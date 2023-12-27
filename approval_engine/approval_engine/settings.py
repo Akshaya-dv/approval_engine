@@ -81,10 +81,10 @@ WSGI_APPLICATION = 'approval_engine.wsgi.application'
 
 # please don't change the variable name
 
-DB_NAME = 'Approval'
+DB_NAME = 'jenkins_app'
 DB_USER = 'postgres'
 DB_PASSWORD = '1234'
-DB_HOST = 'localhost'
+DB_HOST = 'host.docker.internal'
 DB_PORT = '5432'
 
 DATABASES = {
